@@ -3,12 +3,16 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
+# Only copy package.json (not lock file) to force fresh install for Linux
+COPY package.json ./
 
-# Use npm install instead of npm ci to handle platform-specific dependencies
+# Install dependencies fresh for this platform
 RUN npm install
 
 COPY . .
+
+# Remove Windows lock file if copied
+RUN rm -f package-lock.json
 
 RUN npm run build
 
