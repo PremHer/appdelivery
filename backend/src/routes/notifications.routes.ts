@@ -43,7 +43,7 @@ router.post('/new-order', async (req: Request, res: Response) => {
 
         // Filter drivers within ~5km of restaurant (optional, could be disabled)
         const nearbyDrivers = restaurantLat && restaurantLng
-            ? drivers.filter(d => {
+            ? drivers.filter((d: any) => {
                 if (!d.current_latitude || !d.current_longitude) return true; // Include if no location
                 const distance = calculateDistance(
                     restaurantLat, restaurantLng,
@@ -54,9 +54,9 @@ router.post('/new-order', async (req: Request, res: Response) => {
             : drivers;
 
         // Prepare push messages
-        const messages: PushMessage[] = nearbyDrivers
-            .filter(d => d.expo_push_token)
-            .map(d => ({
+        const messages: PushMessage[] = (nearbyDrivers as any[])
+            .filter((d: any) => d.expo_push_token)
+            .map((d: any) => ({
                 to: d.expo_push_token!,
                 sound: 'default',
                 title: '🔔 ¡Nuevo Pedido Disponible!',

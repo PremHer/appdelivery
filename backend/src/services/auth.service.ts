@@ -80,7 +80,7 @@ export class AuthService {
                 full_name,
                 phone: phone || null,
                 is_active: true,
-            })
+            } as any)
             .select()
             .single();
 
@@ -92,13 +92,13 @@ export class AuthService {
 
         // Guardar hash de contraseña separado (para login local)
         await supabaseAdmin.from('user_passwords').insert({
-            user_id: user.id,
+            user_id: (user as any).id,
             password_hash,
-        });
+        } as any);
 
-        const token = this.generateToken(user.id, user.email);
+        const token = this.generateToken((user as any).id, (user as any).email);
 
-        return { user, token };
+        return { user: user as any, token };
     }
 
     static async login(input: LoginInput): Promise<AuthResponse> {
@@ -120,7 +120,7 @@ export class AuthService {
         const { data: passwordData } = await supabaseAdmin
             .from('user_passwords')
             .select('password_hash')
-            .eq('user_id', user.id)
+            .eq('user_id', (user as any).id)
             .single();
 
         if (!passwordData) {
@@ -128,15 +128,15 @@ export class AuthService {
         }
 
         // Verificar contraseña
-        const isValidPassword = await bcrypt.compare(password, passwordData.password_hash);
+        const isValidPassword = await bcrypt.compare(password, (passwordData as any).password_hash);
 
         if (!isValidPassword) {
             throw new AppError('Credenciales inválidas', 401);
         }
 
-        const token = this.generateToken(user.id, user.email);
+        const token = this.generateToken((user as any).id, (user as any).email);
 
-        return { user, token };
+        return { user: user as any, token };
     }
 
     static async getProfile(userId: string): Promise<User> {
@@ -150,7 +150,7 @@ export class AuthService {
             throw new AppError('Usuario no encontrado', 404);
         }
 
-        return user;
+        return user as any;
     }
 
     static async updateProfile(userId: string, updates: Partial<User>): Promise<User> {
@@ -162,7 +162,7 @@ export class AuthService {
             .update({
                 ...safeUpdates,
                 updated_at: new Date().toISOString(),
-            })
+            } as any)
             .eq('id', userId)
             .select()
             .single();
@@ -171,7 +171,7 @@ export class AuthService {
             throw new AppError('Error al actualizar perfil', 500);
         }
 
-        return user;
+        return user as any;
     }
 
     static async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
@@ -187,7 +187,7 @@ export class AuthService {
         }
 
         // Verificar contraseña actual
-        const isValidPassword = await bcrypt.compare(currentPassword, passwordData.password_hash);
+        const isValidPassword = await bcrypt.compare(currentPassword, (passwordData as any).password_hash);
 
         if (!isValidPassword) {
             throw new AppError('Contraseña actual incorrecta', 401);
@@ -200,7 +200,7 @@ export class AuthService {
         // Actualizar contraseña
         const { error } = await supabaseAdmin
             .from('user_passwords')
-            .update({ password_hash, updated_at: new Date().toISOString() })
+            .update({ password_hash, updated_at: new Date().toISOString() } as any)
             .eq('user_id', userId);
 
         if (error) {
@@ -222,7 +222,7 @@ export class AuthService {
 
         // Generar token de reset
         const resetToken = jwt.sign(
-            { userId: user.id, type: 'password_reset' },
+            { userId: (user as any).id, type: 'password_reset' },
             env.JWT_SECRET,
             { expiresIn: '1h' }
         );
