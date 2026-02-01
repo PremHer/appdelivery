@@ -4,9 +4,12 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+
+# Use npm install instead of npm ci to handle platform-specific dependencies
+RUN npm install
 
 COPY . .
+
 RUN npm run build
 
 # Serve with nginx
