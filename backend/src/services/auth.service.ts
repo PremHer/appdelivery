@@ -157,12 +157,12 @@ export class AuthService {
         // No permitir actualizar campos sensibles
         const { id, email, is_active, created_at, ...safeUpdates } = updates as User;
 
-        const { data: user, error } = await supabaseAdmin
-            .from('users')
+        const { data: user, error } = await (supabaseAdmin
+            .from('users') as any)
             .update({
                 ...safeUpdates,
                 updated_at: new Date().toISOString(),
-            } as any)
+            })
             .eq('id', userId)
             .select()
             .single();
@@ -198,9 +198,9 @@ export class AuthService {
         const password_hash = await bcrypt.hash(newPassword, salt);
 
         // Actualizar contraseña
-        const { error } = await supabaseAdmin
-            .from('user_passwords')
-            .update({ password_hash, updated_at: new Date().toISOString() } as any)
+        const { error } = await (supabaseAdmin
+            .from('user_passwords') as any)
+            .update({ password_hash, updated_at: new Date().toISOString() })
             .eq('user_id', userId);
 
         if (error) {
