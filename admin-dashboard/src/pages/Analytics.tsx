@@ -6,8 +6,7 @@ import {
     Users,
     Package,
     Star,
-    Truck,
-    Clock
+    Truck
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -264,8 +263,8 @@ export default function Analytics() {
                             key={p}
                             onClick={() => setPeriod(p)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${period === p
-                                    ? 'bg-orange-500 text-white'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-orange-500 text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >
                             {p === '7d' ? '7 días' : p === '30d' ? '30 días' : 'Todo'}

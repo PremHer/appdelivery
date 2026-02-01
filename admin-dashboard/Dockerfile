@@ -3,10 +3,14 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+# Only copy package.json to force fresh install for Linux
+COPY package.json ./
+
+# Install dependencies fresh for this platform
+RUN npm install
 
 COPY . .
+
 RUN npm run build
 
 # Serve with nginx

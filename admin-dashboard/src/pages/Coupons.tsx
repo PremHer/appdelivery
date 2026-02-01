@@ -9,7 +9,6 @@ import {
     Tag,
     Percent,
     DollarSign,
-    Calendar,
     ToggleLeft,
     ToggleRight
 } from 'lucide-react';
@@ -296,8 +295,8 @@ export default function Coupons() {
                                         <button
                                             onClick={() => toggleStatus(coupon)}
                                             className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${coupon.is_active
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : 'bg-gray-100 text-gray-500'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-gray-100 text-gray-500'
                                                 }`}
                                         >
                                             {coupon.is_active ? (

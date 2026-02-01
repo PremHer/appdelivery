@@ -100,7 +100,7 @@ export default function Dashboard() {
                 .order('created_at', { ascending: false })
                 .limit(5);
 
-            setRecentOrders(orders || []);
+            setRecentOrders((orders as any) || []);
         } catch (error) {
             console.error('Error loading dashboard:', error);
         } finally {

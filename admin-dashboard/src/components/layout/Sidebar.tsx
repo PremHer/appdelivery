@@ -8,7 +8,6 @@ import {
     Truck,
     BarChart3,
     Tag,
-    Settings,
     LogOut
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
