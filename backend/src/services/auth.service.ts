@@ -37,8 +37,8 @@ export class AuthService {
     private static generateToken(userId: string, email: string): string {
         return jwt.sign(
             { userId, email },
-            env.JWT_SECRET,
-            { expiresIn: env.JWT_EXPIRES_IN }
+            env.JWT_SECRET as jwt.Secret,
+            { expiresIn: env.JWT_EXPIRES_IN } as jwt.SignOptions
         );
     }
 
