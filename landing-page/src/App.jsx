@@ -117,14 +117,14 @@ function App() {
                             Entrega rápida, seguimiento en tiempo real y las mejores ofertas.
                         </p>
                         <div className="hero-buttons">
-                            <button className="btn btn-primary">
+                            <a href="#download" className="btn btn-primary">
                                 <Smartphone size={20} />
                                 Descargar App
-                            </button>
-                            <button className="btn btn-secondary">
+                            </a>
+                            <a href="#categories" className="btn btn-secondary">
                                 Ver Restaurantes
                                 <ChevronRight size={20} />
-                            </button>
+                            </a>
                         </div>
 
                         <div className="hero-stats">
