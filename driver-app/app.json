@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "DeliveryDriver",
+    "slug": "delivery-driver-prem",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF6B35"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.prem.deliverydriver",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Necesitamos tu ubicación para asignarte pedidos cercanos.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Necesitamos tu ubicación para tracking de entregas en tiempo real."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FF6B35"
+      },
+      "package": "com.prem.deliverydriver",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+        }
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Permitir acceso a ubicación para tracking de entregas."
+        }
+      ]
+    ],
+    "owner": "hernandezpremh",
+    "extra": {
+      "eas": {
+        "projectId": "3ad3d0e5-b377-4aa3-88bc-1f3b652af7f3"
+      }
+    }
+  }
+}

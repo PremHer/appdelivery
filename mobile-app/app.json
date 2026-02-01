@@ -1,0 +1,80 @@
+{
+  "expo": {
+    "name": "DeliveryApp",
+    "slug": "delivery-app-prem",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF6B35"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.prem.deliveryapp",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Necesitamos tu ubicación para mostrarte restaurantes cercanos y calcular tiempos de entrega.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Necesitamos tu ubicación para tracking de pedidos en tiempo real.",
+        "NSCameraUsageDescription": "Necesitamos acceso a la cámara para que puedas subir fotos de perfil.",
+        "NSPhotoLibraryUsageDescription": "Necesitamos acceso a tus fotos para que puedas subir una foto de perfil."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FF6B35"
+      },
+      "package": "com.prem.deliveryapp",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+        }
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Permitir acceso a ubicación para tracking de pedidos."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permitir acceso a fotos para subir imagen de perfil."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "56e695f6-8b8b-4532-93df-0a39bb80f28f"
+      }
+    },
+    "owner": "hernandezpremh",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/56e695f6-8b8b-4532-93df-0a39bb80f28f"
+    }
+  }
+}
