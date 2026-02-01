@@ -248,14 +248,14 @@ function App() {
                             a pedir tus favoritos con descuentos exclusivos.
                         </p>
                         <div className="download-buttons">
-                            <a href="/downloads/deliveryapp-cliente.apk" className="store-button" download>
+                            <a href="https://expo.dev/accounts/hernandezpremh/projects/delivery-app-prem/builds/4bcd2a35-c241-4ef7-b602-84db2373d1c6" className="store-button" target="_blank" rel="noopener noreferrer">
                                 <span className="store-icon">📱</span>
                                 <div className="store-text">
                                     <small>Descargar APK</small>
                                     <strong>App Cliente</strong>
                                 </div>
                             </a>
-                            <a href="/downloads/deliveryapp-driver.apk" className="store-button" download>
+                            <a href="https://expo.dev/accounts/hernandezpremh/projects/delivery-driver-prem/builds/21fc5602-edb6-41e5-a4a1-d713be944001" className="store-button" target="_blank" rel="noopener noreferrer">
                                 <span className="store-icon">🛵</span>
                                 <div className="store-text">
                                     <small>Descargar APK</small>
