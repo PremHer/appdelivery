@@ -43,6 +43,14 @@ app.set('trust proxy', 1);
 // Rutas de la API
 app.use(`/api/${env.API_VERSION}`, routes);
 
+// Health check endpoint para Railway
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+    });
+});
+
 // Ruta raíz
 app.get('/', (req, res) => {
     res.json({

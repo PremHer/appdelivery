@@ -5,7 +5,7 @@ import type { Database } from '../types/database';
 // Cliente para operaciones del servidor (con service role key)
 export const supabaseAdmin = createClient<Database>(
     env.SUPABASE_URL,
-    env.SUPABASE_SERVICE_ROLE_KEY,
+    env.SUPABASE_SERVICE_KEY,
     {
         auth: {
             autoRefreshToken: false,
