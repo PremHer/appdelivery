@@ -4,10 +4,10 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install ALL dependencies (including devDependencies for TypeScript)
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -20,10 +20,14 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy built files
+# Copy package files
+COPY package.json ./
+
+# Install only production dependencies
+RUN npm install --omit=dev
+
+# Copy built files from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./
 
 # Expose port
 EXPOSE 3001
