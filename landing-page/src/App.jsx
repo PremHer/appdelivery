@@ -248,7 +248,7 @@ function App() {
                             a pedir tus favoritos con descuentos exclusivos.
                         </p>
                         <div className="download-buttons">
-                            <a href="https://expo.dev/accounts/hernandezpremh/projects/delivery-app-prem/builds/4bcd2a35-c241-4ef7-b602-84db2373d1c6" className="store-button" target="_blank" rel="noopener noreferrer">
+                            <a href="https://expo.dev/artifacts/eas/hUqWktP2ojYmo1RVjcQaUc.apk" className="store-button" target="_blank" rel="noopener noreferrer">
                                 <span className="store-icon">📱</span>
                                 <div className="store-text">
                                     <small>Descargar APK</small>
