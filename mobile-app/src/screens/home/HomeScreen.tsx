@@ -380,9 +380,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 {/* Greeting */}
                 <View style={styles.greeting}>
                     <Text style={styles.greetingText}>
-                        Hola, {user?.full_name?.split(' ')[0] || 'Invitado'} 👋
+                        ¡Hola, {user?.full_name?.split(' ')[0] || 'Viajero'}! 🐗⚡
                     </Text>
-                    <Text style={styles.greetingSubtext}>¿Qué te gustaría ordenar hoy?</Text>
+                    <Text style={styles.greetingSubtext}>¿Qué te gustaría pedir hoy?</Text>
                 </View>
 
                 {/* Search Bar */}

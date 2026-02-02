@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "DeliveryApp",
-    "slug": "delivery-app-prem",
-    "scheme": "deliveryapp",
+    "name": "Sajino Express",
+    "slug": "sajino-express",
+    "scheme": "sajinoexpress",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.jpg",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logo.jpg",
       "resizeMode": "contain",
-      "backgroundColor": "#FF6B35"
+      "backgroundColor": "#2D2D2D"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -27,8 +27,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FF6B35"
+        "foregroundImage": "./assets/logo.jpg",
+        "backgroundColor": "#2D2D2D"
       },
       "package": "com.prem.deliveryapp",
       "permissions": [

@@ -1,24 +1,24 @@
-// Constantes de la aplicación
+// Constantes de la aplicación - Sajino Express
 
 export const COLORS = {
-    // Colores primarios
-    primary: '#FF6B35',
-    primaryDark: '#E55A2B',
-    primaryLight: '#FF8C5A',
+    // Colores primarios - Negro/Gris oscuro
+    primary: '#2D2D2D',
+    primaryDark: '#1A1A1A',
+    primaryLight: '#4A4A4A',
 
-    // Colores secundarios
-    secondary: '#2D3748',
-    secondaryDark: '#1A202C',
-    secondaryLight: '#4A5568',
+    // Colores secundarios - Amarillo/Dorado
+    secondary: '#F2A900',
+    secondaryDark: '#D99600',
+    secondaryLight: '#FFB81C',
 
-    // Colores de acento
-    accent: '#10B981',
-    accentDark: '#059669',
-    accentLight: '#34D399',
+    // Colores de acento - Verde para éxito/CTA
+    accent: '#00C853',
+    accentDark: '#00A844',
+    accentLight: '#5EFC82',
 
     // Estados
-    success: '#10B981',
-    warning: '#F59E0B',
+    success: '#00C853',
+    warning: '#F2A900',
     error: '#EF4444',
     info: '#3B82F6',
 
@@ -126,7 +126,7 @@ export const SUPABASE_CONFIG = {
 
 // Constantes de la app
 export const APP_CONFIG = {
-    name: 'DeliveryApp',
+    name: 'Sajino Express',
     currency: 'S/.',
     currencyCode: 'PEN',
     defaultLocation: {

@@ -238,9 +238,9 @@ const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({ navigation, r
                 </View>
 
                 <Button
-                    title={`Agregar • S/. ${calculateTotal().toFixed(2)}`}
+                    title={`Agregar S/${calculateTotal().toFixed(2)}`}
                     onPress={handleAddToCart}
-                    style={styles.addButton}
+                    style={{ ...styles.addButton, backgroundColor: COLORS.accent }}
                 />
             </View>
         </SafeAreaView>

@@ -13,6 +13,7 @@ import {
     Dimensions,
     StatusBar,
     ActivityIndicator,
+    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -184,7 +185,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                     {/* Header con gradiente - Animated */}
                     <Animated.View style={[styles.headerContainer, animatedHeaderStyle]}>
                         <LinearGradient
-                            colors={[COLORS.primary, '#FF8C42']}
+                            colors={[COLORS.primary, COLORS.primaryLight]}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 1 }}
                             style={styles.header}
@@ -193,17 +194,22 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                                 <Animated.View style={[styles.logoCircle, {
                                     width: animatedLogoSize,
                                     height: animatedLogoSize,
-                                    borderRadius: 100
+                                    borderRadius: 100,
+                                    overflow: 'hidden',
                                 }]}>
-                                    <Ionicons name="fast-food" size={32} color={COLORS.primary} />
+                                    <Image
+                                        source={require('../../../assets/logo.jpg')}
+                                        style={{ width: '100%', height: '100%' }}
+                                        resizeMode="contain"
+                                    />
                                 </Animated.View>
                             </View>
                             <Animated.Text style={[styles.title, { fontSize: animatedTitleSize }]}>
-                                ¡Bienvenido!
+                                Sajino Express
                             </Animated.Text>
                             {!isKeyboardVisible && (
                                 <Text style={styles.subtitle}>
-                                    Tu comida favorita está a un tap de distancia
+                                    ¡Rápido como un jabalí! 🐗⚡
                                 </Text>
                             )}
                         </LinearGradient>

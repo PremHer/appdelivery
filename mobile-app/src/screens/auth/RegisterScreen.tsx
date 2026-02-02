@@ -8,6 +8,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     Alert,
+    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -119,12 +120,16 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                         </TouchableOpacity>
                         <View style={styles.logoContainer}>
                             <View style={styles.logoCircle}>
-                                <Ionicons name="person-add" size={40} color={COLORS.primary} />
+                                <Image
+                                    source={require('../../../assets/logo.jpg')}
+                                    style={{ width: 50, height: 50 }}
+                                    resizeMode="contain"
+                                />
                             </View>
                         </View>
-                        <Text style={styles.title}>Crear Cuenta</Text>
+                        <Text style={styles.title}>Únete a Sajino</Text>
                         <Text style={styles.subtitle}>
-                            Únete y disfruta de la mejor comida
+                            ¡Pide rápido como un jabalí! 🐗⚡
                         </Text>
                     </LinearGradient>
 
