@@ -104,6 +104,194 @@ router.post('/new-order', async (req: Request, res: Response) => {
     }
 });
 
+/**
+ * POST /api/v1/notifications/order-status
+ * Send push notification to customer when order status changes
+ */
+router.post('/order-status', async (req: Request, res: Response) => {
+    try {
+        const { orderId, status, restaurantName } = req.body;
+
+        if (!orderId || !status) {
+            return res.status(400).json({ error: 'orderId and status are required' });
+        }
+
+        // Get order with user's push token
+        const { data: order, error: orderError } = await supabase
+            .from('orders')
+            .select(`
+                id,
+                user_id,
+                users!inner(push_token, full_name)
+            `)
+            .eq('id', orderId)
+            .single();
+
+        if (orderError || !order) {
+            console.error('Error fetching order:', orderError);
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const pushToken = (order.users as any)?.push_token;
+
+        if (!pushToken) {
+            return res.json({ message: 'User has no push token', sent: false });
+        }
+
+        // Status messages mapping
+        const statusMessages: Record<string, { title: string; body: string; emoji: string }> = {
+            pending: {
+                emoji: '⏳',
+                title: 'Pedido Recibido',
+                body: `Tu pedido está pendiente de confirmación`,
+            },
+            confirmed: {
+                emoji: '✅',
+                title: 'Pedido Confirmado',
+                body: `${restaurantName || 'El restaurante'} ha confirmado tu pedido`,
+            },
+            preparing: {
+                emoji: '👨‍🍳',
+                title: 'Preparando tu pedido',
+                body: `${restaurantName || 'El restaurante'} está preparando tu comida`,
+            },
+            ready: {
+                emoji: '📦',
+                title: 'Pedido Listo',
+                body: 'Tu pedido está listo para ser recogido por el repartidor',
+            },
+            picked_up: {
+                emoji: '🚴',
+                title: '¡En Camino!',
+                body: 'El repartidor recogió tu pedido y va hacia ti',
+            },
+            delivered: {
+                emoji: '🎉',
+                title: '¡Pedido Entregado!',
+                body: '¡Disfruta tu comida! No olvides calificarnos ⭐',
+            },
+            cancelled: {
+                emoji: '❌',
+                title: 'Pedido Cancelado',
+                body: 'Lo sentimos, tu pedido fue cancelado',
+            },
+        };
+
+        const message = statusMessages[status] || {
+            emoji: '📋',
+            title: 'Actualización de Pedido',
+            body: `Tu pedido cambió a: ${status}`,
+        };
+
+        // Send push notification
+        const response = await fetch('https://exp.host/--/api/v2/push/send', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Accept-encoding': 'gzip, deflate',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                to: pushToken,
+                sound: 'default',
+                title: `${message.emoji} ${message.title}`,
+                body: message.body,
+                data: {
+                    orderId,
+                    type: 'order_status',
+                    status,
+                },
+                priority: 'high',
+                channelId: 'orders',
+            }),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Push notification error:', errorText);
+            return res.status(500).json({ error: 'Failed to send notification' });
+        }
+
+        return res.json({ message: 'Notification sent', sent: true, status });
+
+    } catch (error) {
+        console.error('Error in order-status notification:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+/**
+ * POST /api/v1/notifications/promotion
+ * Send promotional push notification to all users or specific segment
+ */
+router.post('/promotion', async (req: Request, res: Response) => {
+    try {
+        const { title, body, data, userIds } = req.body;
+
+        if (!title || !body) {
+            return res.status(400).json({ error: 'title and body are required' });
+        }
+
+        // Get users with push tokens
+        let query = supabase
+            .from('users')
+            .select('id, push_token')
+            .not('push_token', 'is', null);
+
+        if (userIds && Array.isArray(userIds) && userIds.length > 0) {
+            query = query.in('id', userIds);
+        }
+
+        const { data: users, error } = await query;
+
+        if (error) {
+            console.error('Error fetching users:', error);
+            return res.status(500).json({ error: 'Failed to fetch users' });
+        }
+
+        if (!users || users.length === 0) {
+            return res.json({ message: 'No users with push tokens', notified: 0 });
+        }
+
+        // Prepare messages
+        const messages = users.map((u: any) => ({
+            to: u.push_token,
+            sound: 'default',
+            title: `🎁 ${title}`,
+            body,
+            data: { type: 'promotion', ...data },
+            priority: 'default',
+            channelId: 'promotions',
+        }));
+
+        // Send in batches
+        const chunks = chunkArray(messages, 100);
+        let totalSent = 0;
+
+        for (const chunk of chunks) {
+            const response = await fetch('https://exp.host/--/api/v2/push/send', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Accept-encoding': 'gzip, deflate',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(chunk),
+            });
+
+            if (response.ok) {
+                totalSent += chunk.length;
+            }
+        }
+
+        return res.json({ message: 'Promotions sent', notified: totalSent });
+
+    } catch (error) {
+        console.error('Error sending promotion:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Haversine formula to calculate distance between two points in km
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371; // Earth's radius in km

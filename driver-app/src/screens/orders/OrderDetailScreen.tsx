@@ -48,9 +48,25 @@ export default function OrderDetailScreen() {
             const { error } = await supabase
                 .from('orders')
                 .update({ status: newStatus })
-                .eq('id', orderId); // RLS Check: drivers can update assigned orders? (Wait, policy said 'Admins can update'. I need to check Policies)
+                .eq('id', orderId);
 
             if (error) throw error;
+
+            // Send push notification to customer
+            try {
+                const restaurantName = order?.restaurant?.name || 'Restaurante';
+                await fetch('https://your-backend-url.railway.app/api/v1/notifications/order-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        orderId,
+                        status: newStatus,
+                        restaurantName,
+                    }),
+                });
+            } catch (notifError) {
+                console.warn('Notification error (non-blocking):', notifError);
+            }
 
             Alert.alert('Éxito', `Estado actualizado a: ${newStatus === 'picked_up' ? 'En Camino' : 'Entregado'}`);
             fetchOrderDetails();

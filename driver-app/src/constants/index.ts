@@ -3,6 +3,9 @@ export const SUPABASE_CONFIG = {
     ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmcGxxdHBlY2xnYmtxZmp3dXZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NTkyMjAsImV4cCI6MjA4NTEzNTIyMH0.RZsrQSrbeR-Oc0uzCL1xwfR7qhz_Z4zmlKVTI80NJgk',
 };
 
+// Backend API URL for notifications
+export const API_URL = 'https://your-backend-url.railway.app/api/v1';
+
 export const COLORS = {
     primary: '#FF6B35',
     primaryDark: '#E55A2B',
