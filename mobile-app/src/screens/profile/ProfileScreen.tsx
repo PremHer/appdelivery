@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES, SHADOWS } from '../../constants';
 import { useAuthStore } from '../../context/stores';
 import Button from '../../components/ui/Button';
+import ReferralCard from '../../components/ui/ReferralCard';
 
 const ProfileScreen = ({ navigation }: { navigation: any }) => {
     const { user, logout } = useAuthStore();
@@ -70,6 +71,9 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                         <Ionicons name="chevron-forward" size={20} color={COLORS.gray400} />
                     </TouchableOpacity>
                 </View>
+
+                {/* Referral Card */}
+                <ReferralCard style={{ marginBottom: SIZES.xl }} />
 
                 <Button
                     title="Cerrar Sesión"

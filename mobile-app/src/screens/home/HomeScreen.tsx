@@ -25,6 +25,7 @@ import favoriteService from '../../services/favorite.service';
 import { useToast } from '../../components/ui/Toast';
 import AnimatedCartBadge from '../../components/ui/AnimatedCartBadge';
 import { RestaurantCardSkeleton, CategorySkeleton } from '../../components/ui/SkeletonLoader';
+import WelcomeBanner from '../../components/ui/WelcomeBanner';
 import type { Restaurant, Category, StoreType } from '../../types';
 
 interface HomeScreenProps {
@@ -379,6 +380,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     </Text>
                     <Text style={styles.greetingSubtext}>¿Qué te gustaría pedir hoy?</Text>
                 </View>
+
+                {/* Welcome Banner for New Users */}
+                <WelcomeBanner />
 
                 {/* Search Bar */}
                 <View style={styles.searchContainer}>

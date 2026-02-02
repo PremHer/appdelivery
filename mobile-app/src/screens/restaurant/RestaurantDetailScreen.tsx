@@ -20,6 +20,7 @@ import { supabase } from '../../services/supabase';
 import type { Restaurant, Product } from '../../types';
 import { useCartStore, useAuthStore } from '../../context/stores';
 import favoriteService from '../../services/favorite.service';
+import shareService from '../../services/share.service';
 import AgeVerificationModal from '../../components/modals/AgeVerificationModal';
 import ReviewsModal from '../../components/modals/ReviewsModal';
 import { useToast } from '../../components/ui/Toast';
@@ -327,6 +328,13 @@ const RestaurantDetailScreen: React.FC<RestaurantDetailScreenProps> = ({
                         />
                     </TouchableOpacity>
 
+                    <TouchableOpacity
+                        style={styles.shareButton}
+                        onPress={() => shareService.shareRestaurant(restaurant)}
+                    >
+                        <Ionicons name="share-social" size={22} color={COLORS.white} />
+                    </TouchableOpacity>
+
                     {/* Restaurant Info Overlay */}
                     <View style={styles.headerInfo}>
                         <Text style={styles.restaurantName}>{restaurant.name}</Text>
@@ -475,6 +483,18 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 50,
         right: 20,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 10,
+    },
+    shareButton: {
+        position: 'absolute',
+        top: 50,
+        right: 70,
         width: 40,
         height: 40,
         borderRadius: 20,

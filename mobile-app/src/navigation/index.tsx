@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View } from 'react-native';
+import * as Linking from 'expo-linking';
 
 import { useAuthStore } from '../context/stores';
 import { COLORS } from '../constants';
@@ -71,6 +72,31 @@ export type RootStackParamList = {
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
+
+// Deep linking configuration
+const prefix = Linking.createURL('/');
+
+const linking: LinkingOptions<RootStackParamList> = {
+    prefixes: [prefix, 'deliveryapp://', 'https://sajinoexpress.com'],
+    config: {
+        screens: {
+            MainTabs: {
+                screens: {
+                    Home: 'home',
+                    Search: 'search',
+                    Orders: 'orders',
+                    Favorites: 'favorites',
+                    Profile: 'profile',
+                },
+            },
+            RestaurantDetail: 'restaurant/:id',
+            ProductDetail: 'product/:id',
+            OrderTracking: 'order/:orderId',
+            Cart: 'cart',
+            Checkout: 'checkout',
+        },
+    },
+};
 
 // Auth Navigator
 const AuthNavigator = () => (
@@ -282,7 +308,7 @@ const Navigation = () => {
     );
 
     return (
-        <NavigationContainer>
+        <NavigationContainer linking={linking}>
             {!isOnboardingComplete ? (
                 <OnboardingNavigatorWithCallback />
             ) : isAuthenticated ? (
