@@ -63,6 +63,12 @@
         {
           "photosPermission": "Permitir acceso a fotos para subir imagen de perfil."
         }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.319484744982-nbef4414ui66r9on2l85hchfmbgpjroi"
+        }
       ]
     ],
     "extra": {

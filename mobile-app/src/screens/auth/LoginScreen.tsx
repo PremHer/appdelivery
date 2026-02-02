@@ -20,8 +20,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
+import {
+    GoogleSignin,
+    statusCodes,
+} from '@react-native-google-signin/google-signin';
 
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -29,7 +31,11 @@ import { COLORS, SIZES } from '../../constants';
 import { useAuthStore } from '../../context/stores';
 import authService from '../../services/auth.service';
 
-WebBrowser.maybeCompleteAuthSession();
+// Configure Google Sign-In
+GoogleSignin.configure({
+    webClientId: '319484744982-nbef4414ui66r9on2l85hchfmbgpjroi.apps.googleusercontent.com',
+    offlineAccess: true,
+});
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -53,33 +59,31 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     const headerHeight = useRef(new Animated.Value(1)).current;
     const login = useAuthStore((state) => state.login);
 
-    // Google OAuth Hook - Use Expo's auth proxy for standalone builds
-    const googleConfig = authService.getGoogleAuthConfig();
-    const [request, response, promptAsync] = Google.useAuthRequest({
-        clientId: googleConfig.webClientId,
-        scopes: ['openid', 'profile', 'email'],
-        redirectUri: 'https://auth.expo.io/@hernandezpremh/delivery-app-prem',
-    });
-
-    // Handle Google OAuth response
-    useEffect(() => {
-        if (response?.type === 'success') {
-            handleGoogleSignIn(response.authentication?.idToken);
-        }
-    }, [response]);
-
-    const handleGoogleSignIn = async (idToken: string | undefined) => {
-        if (!idToken) {
-            Alert.alert('Error', 'No se pudo obtener el token de Google');
-            return;
-        }
-
+    // Handle Google Sign-In
+    const handleGoogleSignIn = async () => {
         setIsGoogleLoading(true);
         try {
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
+            const idToken = userInfo.data?.idToken;
+
+            if (!idToken) {
+                throw new Error('No se pudo obtener el token de Google');
+            }
+
             const result = await authService.signInWithGoogleIdToken(idToken);
             login(result.user, result.token);
         } catch (error: any) {
-            Alert.alert('Error', error.message || 'No se pudo iniciar sesión con Google');
+            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+                // User cancelled the login flow
+                console.log('User cancelled Google Sign-In');
+            } else if (error.code === statusCodes.IN_PROGRESS) {
+                Alert.alert('Error', 'Ya hay un inicio de sesión en progreso');
+            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                Alert.alert('Error', 'Google Play Services no está disponible');
+            } else {
+                Alert.alert('Error', error.message || 'No se pudo iniciar sesión con Google');
+            }
         } finally {
             setIsGoogleLoading(false);
         }
@@ -302,8 +306,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                                 <TouchableOpacity
                                     style={[styles.socialButton, isGoogleLoading && styles.socialButtonLoading]}
                                     activeOpacity={0.7}
-                                    onPress={() => promptAsync()}
-                                    disabled={!request || isGoogleLoading}
+                                    onPress={handleGoogleSignIn}
+                                    disabled={isGoogleLoading}
                                 >
                                     {isGoogleLoading ? (
                                         <ActivityIndicator size="small" color="#EA4335" />
