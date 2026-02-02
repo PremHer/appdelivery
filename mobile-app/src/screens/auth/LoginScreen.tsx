@@ -56,8 +56,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     // Google OAuth Hook - Use Expo's auth proxy for standalone builds
     const googleConfig = authService.getGoogleAuthConfig();
     const [request, response, promptAsync] = Google.useAuthRequest({
-        clientId: googleConfig.webClientId, // Use only web client ID
+        clientId: googleConfig.webClientId,
         scopes: ['openid', 'profile', 'email'],
+        redirectUri: 'https://auth.expo.io/@hernandezpremh/delivery-app-prem',
     });
 
     // Handle Google OAuth response
