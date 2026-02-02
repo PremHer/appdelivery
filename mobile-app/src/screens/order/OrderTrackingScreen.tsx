@@ -199,26 +199,49 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
 
     const fetchOrder = async () => {
         try {
+            // Fetch order with restaurant and items first
             const { data, error } = await supabase
                 .from('orders')
-                .select('*, restaurant:restaurants(*), items:order_items(*, product:products(*)), driver:users!driver_id(id, full_name, phone, vehicle_type, vehicle_plate)')
+                .select(`
+                    *,
+                    restaurant:restaurants(*),
+                    items:order_items(*, product:products(*))
+                `)
                 .eq('id', orderId)
                 .single();
 
-            if (error) throw error;
-            setOrder(data);
-            calculateEstimatedTime(data);
+            if (error) {
+                console.error('Error fetching order:', error);
+                throw error;
+            }
+
+            // If order has a driver, fetch driver info separately
+            let orderWithDriver = { ...data, driver: null };
+            if (data.driver_id) {
+                const { data: driverData, error: driverError } = await supabase
+                    .from('users')
+                    .select('id, full_name, phone, vehicle_type, vehicle_plate')
+                    .eq('id', data.driver_id)
+                    .single();
+
+                if (!driverError && driverData) {
+                    orderWithDriver.driver = driverData;
+                }
+            }
+
+            setOrder(orderWithDriver);
+            calculateEstimatedTime(orderWithDriver);
 
             // Initialize driver location at store
-            if (data.restaurant) {
+            if (orderWithDriver.restaurant) {
                 setDriverLocation({
-                    latitude: data.restaurant.latitude,
-                    longitude: data.restaurant.longitude,
+                    latitude: orderWithDriver.restaurant.latitude,
+                    longitude: orderWithDriver.restaurant.longitude,
                 });
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching order:', error);
-            Alert.alert('Error', 'No se pudo cargar el pedido');
+            Alert.alert('Error', 'No se pudo cargar el pedido: ' + (error.message || 'Error desconocido'));
         } finally {
             setLoading(false);
         }
