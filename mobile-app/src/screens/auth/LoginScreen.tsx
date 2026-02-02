@@ -53,12 +53,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     const headerHeight = useRef(new Animated.Value(1)).current;
     const login = useAuthStore((state) => state.login);
 
-    // Google OAuth Hook
+    // Google OAuth Hook - Use Expo's auth proxy for standalone builds
     const googleConfig = authService.getGoogleAuthConfig();
     const [request, response, promptAsync] = Google.useAuthRequest({
-        androidClientId: googleConfig.androidClientId,
-        webClientId: googleConfig.webClientId,
-        expoClientId: googleConfig.webClientId, // Use web client ID for Expo
+        clientId: googleConfig.webClientId, // Use only web client ID
+        scopes: ['openid', 'profile', 'email'],
     });
 
     // Handle Google OAuth response
