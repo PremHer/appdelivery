@@ -1,5 +1,14 @@
 import { supabase } from './supabase';
 import type { User, AuthResponse } from '../types';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
+
+// Configuración de Google OAuth
+const GOOGLE_WEB_CLIENT_ID = '319484744982-nbef4414ui66r9on2l85hchfmbgpjroi.apps.googleusercontent.com';
+const GOOGLE_ANDROID_CLIENT_ID = '319484744982-klmgja5ccvg8j75d9h3lhvkjo7omqqk5.apps.googleusercontent.com';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export interface RegisterData {
     email: string;
@@ -167,7 +176,63 @@ export const authService = {
             provider: provider,
         });
         if (error) throw new Error(error.message);
+    },
+
+    // Google OAuth específico para móvil
+    getGoogleAuthConfig() {
+        return {
+            webClientId: GOOGLE_WEB_CLIENT_ID,
+            androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+        };
+    },
+
+    async signInWithGoogleIdToken(idToken: string): Promise<AuthResponse> {
+        const { data, error } = await supabase.auth.signInWithIdToken({
+            provider: 'google',
+            token: idToken,
+        });
+
+        if (error) throw new Error(error.message);
+        if (!data.user || !data.session) throw new Error('Error de autenticación con Google');
+
+        // Obtener o crear perfil
+        let userProfile;
+        const { data: existingProfile } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', data.user.id)
+            .maybeSingle();
+
+        if (existingProfile) {
+            userProfile = existingProfile;
+        } else {
+            const { data: newProfile, error: createError } = await supabase
+                .from('users')
+                .insert({
+                    id: data.user.id,
+                    email: data.user.email,
+                    full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'Usuario Google',
+                    avatar_url: data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture,
+                    created_at: new Date().toISOString(),
+                    is_active: true
+                })
+                .select()
+                .single();
+
+            if (createError) {
+                console.error('Error creando perfil Google:', createError);
+                userProfile = { ...data.user, full_name: data.user.user_metadata?.name || 'Usuario' };
+            } else {
+                userProfile = newProfile;
+            }
+        }
+
+        return {
+            user: userProfile as User,
+            token: data.session.access_token,
+        };
     }
 };
 
 export default authService;
+

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -12,6 +12,7 @@ import {
     Animated,
     Dimensions,
     StatusBar,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,12 +20,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { COLORS, SIZES } from '../../constants';
 import { useAuthStore } from '../../context/stores';
 import authService from '../../services/auth.service';
+
+WebBrowser.maybeCompleteAuthSession();
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -41,11 +46,43 @@ interface LoginScreenProps {
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
     const scrollViewRef = useRef<ScrollView>(null);
     const passwordInputRef = useRef<TextInput>(null);
     const headerHeight = useRef(new Animated.Value(1)).current;
     const login = useAuthStore((state) => state.login);
+
+    // Google OAuth Hook
+    const googleConfig = authService.getGoogleAuthConfig();
+    const [request, response, promptAsync] = Google.useAuthRequest({
+        androidClientId: googleConfig.androidClientId,
+        webClientId: googleConfig.webClientId,
+    });
+
+    // Handle Google OAuth response
+    useEffect(() => {
+        if (response?.type === 'success') {
+            handleGoogleSignIn(response.authentication?.idToken);
+        }
+    }, [response]);
+
+    const handleGoogleSignIn = async (idToken: string | undefined) => {
+        if (!idToken) {
+            Alert.alert('Error', 'No se pudo obtener el token de Google');
+            return;
+        }
+
+        setIsGoogleLoading(true);
+        try {
+            const result = await authService.signInWithGoogleIdToken(idToken);
+            login(result.user, result.token);
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'No se pudo iniciar sesión con Google');
+        } finally {
+            setIsGoogleLoading(false);
+        }
+    };
 
     const {
         control,
@@ -261,8 +298,17 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
                             {/* Social login buttons */}
                             <View style={styles.socialButtons}>
-                                <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                                    <Ionicons name="logo-google" size={22} color="#EA4335" />
+                                <TouchableOpacity
+                                    style={[styles.socialButton, isGoogleLoading && styles.socialButtonLoading]}
+                                    activeOpacity={0.7}
+                                    onPress={() => promptAsync()}
+                                    disabled={!request || isGoogleLoading}
+                                >
+                                    {isGoogleLoading ? (
+                                        <ActivityIndicator size="small" color="#EA4335" />
+                                    ) : (
+                                        <Ionicons name="logo-google" size={22} color="#EA4335" />
+                                    )}
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
                                     <Ionicons name="logo-apple" size={22} color={COLORS.gray800} />
@@ -445,6 +491,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 1.5,
         borderColor: COLORS.gray100,
+    },
+    socialButtonLoading: {
+        opacity: 0.6,
     },
     guestButton: {
         flexDirection: 'row',
