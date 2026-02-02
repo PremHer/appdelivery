@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "Sajino Express",
-    "slug": "sajino-express",
-    "scheme": "sajinoexpress",
+    "slug": "delivery-app-prem",
+    "scheme": "deliveryapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo.jpg",
