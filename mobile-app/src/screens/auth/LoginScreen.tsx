@@ -58,6 +58,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     const [request, response, promptAsync] = Google.useAuthRequest({
         androidClientId: googleConfig.androidClientId,
         webClientId: googleConfig.webClientId,
+        expoClientId: googleConfig.webClientId, // Use web client ID for Expo
     });
 
     // Handle Google OAuth response
