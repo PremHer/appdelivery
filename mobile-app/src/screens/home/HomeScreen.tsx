@@ -23,6 +23,8 @@ import { useAuthStore, useLocationStore, useCartStore } from '../../context/stor
 import { supabase } from '../../services/supabase';
 import favoriteService from '../../services/favorite.service';
 import { useToast } from '../../components/ui/Toast';
+import AnimatedCartBadge from '../../components/ui/AnimatedCartBadge';
+import { RestaurantCardSkeleton, CategorySkeleton } from '../../components/ui/SkeletonLoader';
 import type { Restaurant, Category, StoreType } from '../../types';
 
 interface HomeScreenProps {
@@ -351,17 +353,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 </View>
 
                 <View style={styles.headerRight}>
-                    <TouchableOpacity
-                        style={styles.headerButton}
+                    <AnimatedCartBadge
+                        count={cartItemCount}
                         onPress={() => navigation.navigate('Cart')}
-                    >
-                        <Ionicons name="cart-outline" size={24} color={COLORS.gray700} />
-                        {cartItemCount > 0 && (
-                            <View style={styles.cartBadge}>
-                                <Text style={styles.cartBadgeText}>{cartItemCount}</Text>
-                            </View>
-                        )}
-                    </TouchableOpacity>
+                    />
                 </View>
             </View>
 
@@ -491,7 +486,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     </Text>
                 </View>
                 {loading && !refreshing && restaurants.length === 0 ? (
-                    <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
+                    <View style={styles.restaurantsList}>
+                        <RestaurantCardSkeleton />
+                        <View style={{ height: 16 }} />
+                        <RestaurantCardSkeleton />
+                        <View style={{ height: 16 }} />
+                        <RestaurantCardSkeleton />
+                    </View>
                 ) : (
                     <View style={styles.restaurantsList}>
                         {filteredRestaurants.length > 0 ? (

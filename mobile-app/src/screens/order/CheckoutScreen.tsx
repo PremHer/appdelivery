@@ -20,6 +20,7 @@ import orderService from '../../services/order.service';
 import addressService from '../../services/address.service';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import TipSelector from '../../components/ui/TipSelector';
 import { supabase } from '../../services/supabase';
 import ScheduledDeliveryModal from '../../components/modals/ScheduledDeliveryModal';
 import { format } from 'date-fns';
@@ -60,6 +61,9 @@ const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation }) => {
     const [deliveryInstructions, setDeliveryInstructions] = useState<string[]>([]);
     const [deliveryNote, setDeliveryNote] = useState('');
 
+    // Tip state
+    const [selectedTip, setSelectedTip] = useState(0);
+
     const subtotal = getSubtotal();
     const deliveryFee = 5.00;
 
@@ -76,7 +80,7 @@ const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation }) => {
         }
     }
 
-    const total = subtotal + deliveryFee - discount;
+    const total = subtotal + deliveryFee - discount + selectedTip;
 
     // Load default address if none selected
     useFocusEffect(
@@ -519,6 +523,15 @@ const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation }) => {
                     </View>
                 </View>
 
+                {/* Propina */}
+                <View style={styles.section}>
+                    <TipSelector
+                        subtotal={subtotal}
+                        selectedTip={selectedTip}
+                        onTipChange={setSelectedTip}
+                    />
+                </View>
+
                 {/* Instrucciones de Entrega */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>📍 Instrucciones para el repartidor</Text>
@@ -582,6 +595,12 @@ const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation }) => {
                     <View style={styles.row}>
                         <Text style={[styles.label, { color: COLORS.success }]}>Descuento</Text>
                         <Text style={[styles.value, { color: COLORS.success }]}>-S/. {discount.toFixed(2)}</Text>
+                    </View>
+                )}
+                {selectedTip > 0 && (
+                    <View style={styles.row}>
+                        <Text style={[styles.label, { color: COLORS.accent }]}>Propina</Text>
+                        <Text style={[styles.value, { color: COLORS.accent }]}>S/. {selectedTip.toFixed(2)}</Text>
                     </View>
                 )}
                 <View style={[styles.row, styles.totalRow]}>
