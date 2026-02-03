@@ -159,43 +159,67 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
         return () => pulse.stop();
     }, []);
 
-    // Simulate driver movement
+    // Real-time driver location tracking
     useEffect(() => {
-        if (!order || order.status === 'delivered' || order.status === 'cancelled') return;
+        if (!order?.driver_id) return;
+        if (order.status === 'delivered' || order.status === 'cancelled') return;
 
-        const storeLocation = order.restaurant ? {
-            latitude: order.restaurant.latitude,
-            longitude: order.restaurant.longitude,
-        } : null;
+        // Fetch initial driver location
+        const fetchDriverLocation = async () => {
+            const { data } = await supabase
+                .from('driver_profiles')
+                .select('current_latitude, current_longitude')
+                .eq('user_id', order.driver_id)
+                .single();
 
-        const deliveryLocation = order.delivery_latitude && order.delivery_longitude ? {
-            latitude: order.delivery_latitude,
-            longitude: order.delivery_longitude,
-        } : null;
-
-        if (!storeLocation || !deliveryLocation) return;
-
-        // Start driver at store, move towards delivery
-        let progress = order.status === 'ready' || order.status === 'picked_up' ? 0.3 : 0;
-
-        const interval = setInterval(() => {
-            if (progress >= 1) {
-                clearInterval(interval);
-                return;
+            if (data?.current_latitude && data?.current_longitude) {
+                setDriverLocation({
+                    latitude: data.current_latitude,
+                    longitude: data.current_longitude,
+                });
             }
+        };
 
-            progress += 0.05;
-            const newLat = storeLocation.latitude + (deliveryLocation.latitude - storeLocation.latitude) * progress;
-            const newLng = storeLocation.longitude + (deliveryLocation.longitude - storeLocation.longitude) * progress;
+        fetchDriverLocation();
 
-            setDriverLocation({
-                latitude: newLat,
-                longitude: newLng,
-            });
-        }, 3000);
+        // Subscribe to real-time driver location updates
+        const driverSubscription = supabase
+            .channel(`driver_location_${order.driver_id}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'driver_profiles',
+                    filter: `user_id=eq.${order.driver_id}`,
+                },
+                (payload) => {
+                    const { current_latitude, current_longitude } = payload.new as any;
+                    if (current_latitude && current_longitude) {
+                        setDriverLocation({
+                            latitude: current_latitude,
+                            longitude: current_longitude,
+                        });
+                        // Recalculate ETA based on new location
+                        if (order.delivery_latitude && order.delivery_longitude) {
+                            const distance = calculateDistance(
+                                current_latitude,
+                                current_longitude,
+                                order.delivery_latitude,
+                                order.delivery_longitude
+                            );
+                            const travelTime = Math.ceil(distance * 4); // ~15 km/h
+                            setEstimatedMinutes(Math.max(2, Math.min(60, travelTime + 2)));
+                        }
+                    }
+                }
+            )
+            .subscribe();
 
-        return () => clearInterval(interval);
-    }, [order?.status]);
+        return () => {
+            driverSubscription.unsubscribe();
+        };
+    }, [order?.driver_id, order?.status]);
 
     const fetchOrder = async () => {
         try {
@@ -232,8 +256,22 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
             setOrder(orderWithDriver);
             calculateEstimatedTime(orderWithDriver);
 
-            // Initialize driver location at store
-            if (orderWithDriver.restaurant) {
+            // Fetch driver's current location from driver_profiles
+            if (data.driver_id) {
+                const { data: driverLocationData } = await supabase
+                    .from('driver_profiles')
+                    .select('current_latitude, current_longitude')
+                    .eq('user_id', data.driver_id)
+                    .single();
+
+                if (driverLocationData?.current_latitude && driverLocationData?.current_longitude) {
+                    setDriverLocation({
+                        latitude: driverLocationData.current_latitude,
+                        longitude: driverLocationData.current_longitude,
+                    });
+                }
+            } else if (orderWithDriver.restaurant) {
+                // If no driver yet, show restaurant location
                 setDriverLocation({
                     latitude: orderWithDriver.restaurant.latitude,
                     longitude: orderWithDriver.restaurant.longitude,
