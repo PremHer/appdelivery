@@ -116,23 +116,26 @@ router.post('/order-status', async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'orderId and status are required' });
         }
 
-        // Get order with user's push token
+        // Get order
         const { data: order, error: orderError } = await supabase
             .from('orders')
-            .select(`
-                id,
-                user_id,
-                users!inner(push_token, full_name)
-            `)
+            .select('id, user_id')
             .eq('id', orderId)
-            .single();
+            .single() as { data: { id: string; user_id: string } | null; error: any };
 
         if (orderError || !order) {
             console.error('Error fetching order:', orderError);
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        const pushToken = (order.users as any)?.push_token;
+        // Get user's push token
+        const { data: user } = await supabase
+            .from('users')
+            .select('push_token')
+            .eq('id', order.user_id)
+            .single() as { data: { push_token: string | null } | null; error: any };
+
+        const pushToken = user?.push_token;
 
         if (!pushToken) {
             return res.json({ message: 'User has no push token', sent: false });
