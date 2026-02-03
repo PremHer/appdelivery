@@ -12,6 +12,7 @@ import { useAuthStore } from './src/context/stores';
 import { COLORS } from './src/constants';
 import notificationService from './src/services/notification.service';
 import { ToastProvider } from './src/components/ui/Toast';
+import { ThemeProvider } from './src/context/ThemeContext';
 
 // Mantener el splash screen visible mientras cargamos
 SplashScreen.preventAutoHideAsync();
@@ -106,12 +107,14 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <SafeAreaProvider>
-        <ToastProvider>
-          <StatusBar style="auto" />
-          <Navigation />
-        </ToastProvider>
-      </SafeAreaProvider>
+      <ThemeProvider>
+        <SafeAreaProvider>
+          <ToastProvider>
+            <StatusBar style="auto" />
+            <Navigation />
+          </ToastProvider>
+        </SafeAreaProvider>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

@@ -1,15 +1,17 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { COLORS, SIZES, SHADOWS } from '../../constants';
 import { useAuthStore } from '../../context/stores';
+import { useTheme } from '../../context/ThemeContext';
 import Button from '../../components/ui/Button';
 import ReferralCard from '../../components/ui/ReferralCard';
 
 const ProfileScreen = ({ navigation }: { navigation: any }) => {
     const { user, logout } = useAuthStore();
+    const { isDark, themeMode, setThemeMode } = useTheme();
 
     if (!user) {
         return (
@@ -73,7 +75,39 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
                 </View>
 
                 {/* Referral Card */}
-                <ReferralCard style={{ marginBottom: SIZES.xl }} />
+                <ReferralCard style={{ marginBottom: SIZES.lg }} />
+
+                {/* Theme Settings */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Apariencia</Text>
+
+                    <TouchableOpacity
+                        style={[styles.menuItem, themeMode === 'light' && styles.menuItemSelected]}
+                        onPress={() => setThemeMode('light')}
+                    >
+                        <Ionicons name="sunny-outline" size={24} color={themeMode === 'light' ? COLORS.secondary : COLORS.gray700} />
+                        <Text style={[styles.menuText, themeMode === 'light' && styles.menuTextSelected]}>Claro</Text>
+                        {themeMode === 'light' && <Ionicons name="checkmark" size={20} color={COLORS.secondary} />}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.menuItem, themeMode === 'dark' && styles.menuItemSelected]}
+                        onPress={() => setThemeMode('dark')}
+                    >
+                        <Ionicons name="moon-outline" size={24} color={themeMode === 'dark' ? COLORS.secondary : COLORS.gray700} />
+                        <Text style={[styles.menuText, themeMode === 'dark' && styles.menuTextSelected]}>Oscuro</Text>
+                        {themeMode === 'dark' && <Ionicons name="checkmark" size={20} color={COLORS.secondary} />}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.menuItem, themeMode === 'system' && styles.menuItemSelected, { borderBottomWidth: 0 }]}
+                        onPress={() => setThemeMode('system')}
+                    >
+                        <Ionicons name="phone-portrait-outline" size={24} color={themeMode === 'system' ? COLORS.secondary : COLORS.gray700} />
+                        <Text style={[styles.menuText, themeMode === 'system' && styles.menuTextSelected]}>Sistema</Text>
+                        {themeMode === 'system' && <Ionicons name="checkmark" size={20} color={COLORS.secondary} />}
+                    </TouchableOpacity>
+                </View>
 
                 <Button
                     title="Cerrar Sesión"
@@ -169,7 +203,14 @@ const styles = StyleSheet.create({
     logoutButton: {
         marginTop: SIZES.md,
         borderColor: COLORS.error,
-    }
+    },
+    menuItemSelected: {
+        backgroundColor: COLORS.gray50,
+    },
+    menuTextSelected: {
+        fontWeight: '600',
+        color: COLORS.secondary,
+    },
 });
 
 export default ProfileScreen;
