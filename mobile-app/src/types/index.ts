@@ -107,7 +107,7 @@ export type OrderStatus =
     | 'delivered'
     | 'cancelled';
 
-export type PaymentMethod = 'cash' | 'card' | 'wallet' | 'yape' | 'plin' | 'pos';
+export type PaymentMethod = 'cash' | 'yape' | 'plin' | 'lemon' | 'billetera_bcp' | 'tunki' | 'card' | 'pos';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 
 export interface Order {

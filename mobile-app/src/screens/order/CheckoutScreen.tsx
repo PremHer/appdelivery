@@ -21,6 +21,7 @@ import addressService from '../../services/address.service';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import TipSelector from '../../components/ui/TipSelector';
+import PaymentMethodSelector from '../../components/ui/PaymentMethodSelector';
 import { supabase } from '../../services/supabase';
 import ScheduledDeliveryModal from '../../components/modals/ScheduledDeliveryModal';
 import { format } from 'date-fns';
@@ -408,14 +409,10 @@ const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ navigation }) => {
 
                 {/* Método de Pago */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Método de Pago</Text>
-                    <View style={styles.paymentGrid}>
-                        {renderPaymentOption('cash', 'cash-outline', 'Efectivo', COLORS.success)}
-                        {renderPaymentOption('yape', 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Yape_text_app_icon.png/512px-Yape_text_app_icon.png', 'Yape', '#742284')}
-                        {renderPaymentOption('plin', 'https://pbs.twimg.com/profile_images/1222923838029910017/04hAd26-_400x400.jpg', 'Plin', '#00A1E0')}
-                        {renderPaymentOption('card', 'card-outline', 'Tarjeta', COLORS.primary)}
-                        {renderPaymentOption('pos', 'calculator-outline', 'POS', COLORS.warning)}
-                    </View>
+                    <PaymentMethodSelector
+                        selectedMethod={paymentMethod}
+                        onSelect={setPaymentMethod}
+                    />
                 </View>
 
                 {/* Horario de Entrega */}
