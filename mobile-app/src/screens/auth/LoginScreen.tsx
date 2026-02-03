@@ -14,6 +14,7 @@ import {
     StatusBar,
     ActivityIndicator,
     Image,
+    Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -96,19 +97,26 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     const handleFacebookSignIn = async () => {
         setIsFacebookLoading(true);
         try {
-            // Facebook login uses Supabase OAuth flow
+            // Get OAuth URL from Supabase
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'facebook',
                 options: {
                     redirectTo: 'sajinoexpress://auth/callback',
-                    scopes: 'email,public_profile',
+                    skipBrowserRedirect: true, // Get URL instead of auto-redirecting
                 },
             });
 
             if (error) throw error;
 
-            // The OAuth flow will redirect the user
-            // The session will be handled by the auth state listener
+            if (data?.url) {
+                // Open the OAuth URL in the browser
+                const supported = await Linking.canOpenURL(data.url);
+                if (supported) {
+                    await Linking.openURL(data.url);
+                } else {
+                    Alert.alert('Error', 'No se puede abrir el navegador');
+                }
+            }
         } catch (error: any) {
             console.error('Facebook login error:', error);
             Alert.alert('Error', error.message || 'No se pudo iniciar sesión con Facebook');
