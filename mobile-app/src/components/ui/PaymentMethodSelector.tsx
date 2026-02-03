@@ -18,6 +18,7 @@ interface PaymentOption {
     icon: string;
     color: string;
     phone?: string; // Phone number for transfers
+    lemonTag?: string; // Lemon Cash tag
 }
 
 const PAYMENT_OPTIONS: PaymentOption[] = [
@@ -34,7 +35,7 @@ const PAYMENT_OPTIONS: PaymentOption[] = [
         description: 'Transfiere al número del negocio',
         icon: 'phone-portrait-outline',
         color: '#6B2D83', // Yape purple
-        phone: '999888777',
+        phone: '967795837',
     },
     {
         id: 'plin',
@@ -42,7 +43,7 @@ const PAYMENT_OPTIONS: PaymentOption[] = [
         description: 'Paga con Plin al número indicado',
         icon: 'phone-portrait-outline',
         color: '#00D4AA', // Plin teal
-        phone: '999888777',
+        phone: '967795837',
     },
     {
         id: 'lemon',
@@ -50,6 +51,8 @@ const PAYMENT_OPTIONS: PaymentOption[] = [
         description: 'Paga con criptomonedas',
         icon: 'logo-bitcoin',
         color: '#FFD700',
+        phone: '967795837',
+        lemonTag: '@sajino',
     },
     {
         id: 'billetera_bcp',
@@ -57,7 +60,7 @@ const PAYMENT_OPTIONS: PaymentOption[] = [
         description: 'Transferencia desde Billetera BCP',
         icon: 'wallet-outline',
         color: '#0033A0',
-        phone: '999888777',
+        phone: '967795837',
     },
     {
         id: 'tunki',
@@ -65,7 +68,7 @@ const PAYMENT_OPTIONS: PaymentOption[] = [
         description: 'Paga con tu billetera Tunki',
         icon: 'wallet-outline',
         color: '#E91E63',
-        phone: '999888777',
+        phone: '967795837',
     },
     {
         id: 'pos',
@@ -169,6 +172,25 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                                             Realiza la transferencia y envía el comprobante al chat después de confirmar el pedido
                                         </Text>
                                     </View>
+                                )}
+
+                                {/* Lemon Cash tag */}
+                                {selected.id === 'lemon' && selected.lemonTag && (
+                                    <>
+                                        <View style={styles.phoneContainer}>
+                                            <Ionicons name="at" size={16} color="#FFD700" />
+                                            <Text style={styles.phoneLabel}>Tag de Lemon:</Text>
+                                            <Text style={[styles.phoneNumber, { color: '#FFD700' }]}>
+                                                {selected.lemonTag}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.instructionBox}>
+                                            <Ionicons name="information-circle" size={18} color="#FFD700" />
+                                            <Text style={styles.instructionText}>
+                                                Busca el tag en Lemon Cash y transfiere. Envía captura al chat.
+                                            </Text>
+                                        </View>
+                                    </>
                                 )}
 
                                 {selected.id === 'cash' && (
