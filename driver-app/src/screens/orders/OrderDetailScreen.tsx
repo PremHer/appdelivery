@@ -55,7 +55,7 @@ export default function OrderDetailScreen() {
             // Send push notification to customer
             try {
                 const restaurantName = order?.restaurant?.name || 'Restaurante';
-                await fetch('https://your-backend-url.railway.app/api/v1/notifications/order-status', {
+                await fetch('https://backend-production-7bd6.up.railway.app/api/v1/notifications/order-status', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

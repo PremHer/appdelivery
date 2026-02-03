@@ -4,7 +4,7 @@ export const SUPABASE_CONFIG = {
 };
 
 // Backend API URL for notifications
-export const API_URL = 'https://your-backend-url.railway.app/api/v1';
+export const API_URL = 'https://backend-production-7bd6.up.railway.app/api/v1';
 
 export const COLORS = {
     primary: '#FF6B35',
