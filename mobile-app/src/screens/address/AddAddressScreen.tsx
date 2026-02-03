@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -9,24 +9,33 @@ import {
     KeyboardAvoidingView,
     Platform,
     Switch,
+    TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 
-import { COLORS, SIZES, FONTS } from '../../constants';
+import { COLORS, SIZES } from '../../constants';
 import { useAuthStore } from '../../context/stores';
 import addressService from '../../services/address.service';
 import Button from '../../components/ui/Button';
+import MapPickerModal from '../../components/modals/MapPickerModal';
 
 interface AddAddressScreenProps {
     navigation: any;
 }
 
+const LABELS = [
+    { id: 'Casa', icon: 'home', color: '#4CAF50' },
+    { id: 'Trabajo', icon: 'briefcase', color: '#2196F3' },
+    { id: 'Otro', icon: 'location', color: '#FF9800' },
+];
+
 const AddAddressScreen: React.FC<AddAddressScreenProps> = ({ navigation }) => {
     const { user } = useAuthStore();
     const [loading, setLoading] = useState(false);
     const [detecting, setDetecting] = useState(false);
+    const [showMapPicker, setShowMapPicker] = useState(false);
 
     const [label, setLabel] = useState('Casa');
     const [address, setAddress] = useState('');
@@ -68,9 +77,14 @@ const AddAddressScreen: React.FC<AddAddressScreenProps> = ({ navigation }) => {
         }
     };
 
+    const handleMapSelection = (location: { address: string; latitude: number; longitude: number }) => {
+        setAddress(location.address);
+        setCoords({ lat: location.latitude, lng: location.longitude });
+    };
+
     const handleSave = async () => {
         if (!address || !coords) {
-            Alert.alert('Error', 'Por favor ingresa una dirección o detecta tu ubicación.');
+            Alert.alert('Error', 'Por favor selecciona una ubicación en el mapa o detecta tu ubicación.');
             return;
         }
 
@@ -104,79 +118,135 @@ const AddAddressScreen: React.FC<AddAddressScreenProps> = ({ navigation }) => {
                 style={{ flex: 1 }}
             >
                 <ScrollView contentContainerStyle={styles.scroll}>
+                    {/* Header */}
                     <View style={styles.header}>
+                        <TouchableOpacity onPress={() => navigation.goBack()}>
+                            <Ionicons name="arrow-back" size={24} color={COLORS.gray900} />
+                        </TouchableOpacity>
                         <Text style={styles.title}>Nueva Dirección</Text>
-                        <Ionicons
-                            name="close"
-                            size={24}
-                            color={COLORS.gray900}
-                            onPress={() => navigation.goBack()}
-                        />
+                        <View style={{ width: 24 }} />
                     </View>
 
+                    {/* Label Selector - Improved */}
                     <View style={styles.formGroup}>
-                        <Text style={styles.label}>Etiqueta (Ej: Casa, Trabajo)</Text>
+                        <Text style={styles.label}>Tipo de dirección</Text>
                         <View style={styles.labelSelector}>
-                            {['Casa', 'Trabajo', 'Otro'].map((l) => (
-                                <Button
-                                    key={l}
-                                    title={l}
-                                    variant={label === l ? 'primary' : 'outline'}
-                                    onPress={() => setLabel(l)}
-                                    style={styles.labelButton}
-                                    textStyle={{ fontSize: 12 }}
-                                />
-                            ))}
+                            {LABELS.map((l) => {
+                                const isSelected = label === l.id;
+                                return (
+                                    <TouchableOpacity
+                                        key={l.id}
+                                        style={[
+                                            styles.labelCard,
+                                            isSelected && { borderColor: l.color, backgroundColor: l.color + '15' },
+                                        ]}
+                                        onPress={() => setLabel(l.id)}
+                                    >
+                                        <View style={[styles.labelIconContainer, { backgroundColor: l.color + '20' }]}>
+                                            <Ionicons name={l.icon as any} size={20} color={l.color} />
+                                        </View>
+                                        <Text style={[styles.labelText, isSelected && { color: l.color, fontWeight: '700' }]}>
+                                            {l.id}
+                                        </Text>
+                                        {isSelected && (
+                                            <View style={[styles.checkMark, { backgroundColor: l.color }]}>
+                                                <Ionicons name="checkmark" size={12} color={COLORS.white} />
+                                            </View>
+                                        )}
+                                    </TouchableOpacity>
+                                );
+                            })}
                         </View>
                     </View>
 
+                    {/* Address Input with Map Button */}
                     <View style={styles.formGroup}>
                         <Text style={styles.label}>Dirección</Text>
-                        <View style={styles.addressInputContainer}>
-                            <TextInput
-                                style={[styles.input, { flex: 1 }]}
-                                value={address}
-                                onChangeText={setAddress}
-                                placeholder="Calle, Número, Ciudad"
+                        <TouchableOpacity
+                            style={styles.addressCard}
+                            onPress={() => setShowMapPicker(true)}
+                        >
+                            <View style={styles.addressContent}>
+                                <Ionicons name="location" size={22} color={COLORS.primary} />
+                                <Text style={[styles.addressText, !address && styles.addressPlaceholder]}>
+                                    {address || 'Toca para seleccionar en el mapa'}
+                                </Text>
+                            </View>
+                            <Ionicons name="map" size={22} color={COLORS.primary} />
+                        </TouchableOpacity>
+
+                        {/* Quick GPS Button */}
+                        <TouchableOpacity
+                            style={styles.gpsButton}
+                            onPress={getCurrentLocation}
+                            disabled={detecting}
+                        >
+                            <Ionicons
+                                name="navigate"
+                                size={18}
+                                color={COLORS.primary}
                             />
-                            <Button
-                                title=""
-                                icon={<Ionicons name="navigate" size={20} color={COLORS.white} />}
-                                onPress={getCurrentLocation}
-                                loading={detecting}
-                                style={styles.locationButton}
-                            />
-                        </View>
+                            <Text style={styles.gpsButtonText}>
+                                {detecting ? 'Detectando...' : 'Usar mi ubicación actual'}
+                            </Text>
+                        </TouchableOpacity>
                     </View>
 
+                    {/* Coordinates Preview */}
+                    {coords && (
+                        <View style={styles.coordsPreview}>
+                            <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+                            <Text style={styles.coordsText}>
+                                Ubicación guardada: {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
+                            </Text>
+                        </View>
+                    )}
+
+                    {/* Details */}
                     <View style={styles.formGroup}>
                         <Text style={styles.label}>Referencias / Detalles</Text>
                         <TextInput
                             style={[styles.input, styles.textArea]}
                             value={details}
                             onChangeText={setDetails}
-                            placeholder="Apt, Piso, Referencia..."
+                            placeholder="Ej: Puerta blanca, segundo piso, cerca al parque..."
+                            placeholderTextColor={COLORS.gray400}
                             multiline
                         />
                     </View>
 
+                    {/* Default Switch */}
                     <View style={styles.row}>
-                        <Text style={styles.label}>Establecer como predeterminada</Text>
+                        <View style={styles.rowLeft}>
+                            <Ionicons name="star" size={20} color={COLORS.warning} />
+                            <Text style={styles.rowLabel}>Establecer como predeterminada</Text>
+                        </View>
                         <Switch
                             value={isDefault}
                             onValueChange={setIsDefault}
                             trackColor={{ false: COLORS.gray200, true: COLORS.primary }}
+                            thumbColor={isDefault ? COLORS.white : COLORS.gray400}
                         />
                     </View>
 
+                    {/* Save Button */}
                     <Button
                         title="Guardar Dirección"
                         onPress={handleSave}
                         loading={loading}
                         style={styles.saveButton}
+                        icon={<Ionicons name="checkmark-circle" size={20} color={COLORS.white} />}
                     />
                 </ScrollView>
             </KeyboardAvoidingView>
+
+            {/* Map Picker Modal */}
+            <MapPickerModal
+                visible={showMapPicker}
+                onClose={() => setShowMapPicker(false)}
+                onSelectLocation={handleMapSelection}
+                initialLocation={coords ? { latitude: coords.lat, longitude: coords.lng } : undefined}
+            />
         </SafeAreaView>
     );
 };
@@ -209,6 +279,93 @@ const styles = StyleSheet.create({
         color: COLORS.gray900,
         marginBottom: SIZES.sm,
     },
+    labelSelector: {
+        flexDirection: 'row',
+        gap: SIZES.sm,
+    },
+    labelCard: {
+        flex: 1,
+        padding: SIZES.md,
+        borderRadius: SIZES.radiusMd,
+        backgroundColor: COLORS.white,
+        borderWidth: 2,
+        borderColor: COLORS.gray200,
+        alignItems: 'center',
+        position: 'relative',
+    },
+    labelIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 6,
+    },
+    labelText: {
+        fontSize: SIZES.fontSm,
+        color: COLORS.gray600,
+        fontWeight: '500',
+    },
+    checkMark: {
+        position: 'absolute',
+        top: 6,
+        right: 6,
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    addressCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: COLORS.white,
+        padding: SIZES.md,
+        borderRadius: SIZES.radiusMd,
+        borderWidth: 1,
+        borderColor: COLORS.gray200,
+    },
+    addressContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        gap: SIZES.sm,
+    },
+    addressText: {
+        flex: 1,
+        fontSize: SIZES.fontMd,
+        color: COLORS.gray900,
+    },
+    addressPlaceholder: {
+        color: COLORS.gray400,
+    },
+    gpsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        marginTop: SIZES.sm,
+        paddingVertical: SIZES.sm,
+    },
+    gpsButtonText: {
+        fontSize: SIZES.fontSm,
+        color: COLORS.primary,
+        fontWeight: '600',
+    },
+    coordsPreview: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: COLORS.success + '15',
+        padding: SIZES.sm,
+        borderRadius: SIZES.radiusSm,
+        marginBottom: SIZES.md,
+    },
+    coordsText: {
+        fontSize: 11,
+        color: COLORS.success,
+    },
     input: {
         backgroundColor: COLORS.white,
         borderWidth: 1,
@@ -216,36 +373,33 @@ const styles = StyleSheet.create({
         borderRadius: SIZES.radiusMd,
         padding: SIZES.md,
         fontSize: SIZES.fontMd,
+        color: COLORS.gray900,
     },
     textArea: {
         minHeight: 80,
         textAlignVertical: 'top',
     },
-    labelSelector: {
-        flexDirection: 'row',
-        gap: SIZES.sm,
-    },
-    labelButton: {
-        minWidth: 80,
-        height: 36,
-    },
-    addressInputContainer: {
-        flexDirection: 'row',
-        gap: SIZES.sm,
-    },
-    locationButton: {
-        width: 50,
-        paddingHorizontal: 0,
-    },
     row: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        backgroundColor: COLORS.white,
+        padding: SIZES.md,
+        borderRadius: SIZES.radiusMd,
         marginBottom: SIZES.xl,
-        marginTop: SIZES.md,
+    },
+    rowLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SIZES.sm,
+    },
+    rowLabel: {
+        fontSize: SIZES.fontMd,
+        color: COLORS.gray800,
+        fontWeight: '500',
     },
     saveButton: {
-        marginTop: SIZES.lg,
+        marginTop: SIZES.md,
     },
 });
 

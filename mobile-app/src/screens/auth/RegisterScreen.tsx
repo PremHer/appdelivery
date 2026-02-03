@@ -129,7 +129,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                         </View>
                         <Text style={styles.title}>Únete a Sajino</Text>
                         <Text style={styles.subtitle}>
-                            ¡Pide rápido como un jabalí! 🐗⚡
+                            ¡Pide rápido como un sajino! 🐗💨
                         </Text>
                     </LinearGradient>
 

@@ -28,6 +28,7 @@ import {
 
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import { supabase } from '../../services/supabase';
 import { COLORS, SIZES } from '../../constants';
 import { useAuthStore } from '../../context/stores';
 import authService from '../../services/auth.service';
@@ -54,6 +55,7 @@ interface LoginScreenProps {
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+    const [isFacebookLoading, setIsFacebookLoading] = useState(false);
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
     const scrollViewRef = useRef<ScrollView>(null);
     const passwordInputRef = useRef<TextInput>(null);
@@ -87,6 +89,31 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             }
         } finally {
             setIsGoogleLoading(false);
+        }
+    };
+
+    // Handle Facebook Sign-In
+    const handleFacebookSignIn = async () => {
+        setIsFacebookLoading(true);
+        try {
+            // Facebook login uses Supabase OAuth flow
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'facebook',
+                options: {
+                    redirectTo: 'sajinoexpress://auth/callback',
+                    scopes: 'email,public_profile',
+                },
+            });
+
+            if (error) throw error;
+
+            // The OAuth flow will redirect the user
+            // The session will be handled by the auth state listener
+        } catch (error: any) {
+            console.error('Facebook login error:', error);
+            Alert.alert('Error', error.message || 'No se pudo iniciar sesión con Facebook');
+        } finally {
+            setIsFacebookLoading(false);
         }
     };
 
@@ -209,7 +236,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                             </Animated.Text>
                             {!isKeyboardVisible && (
                                 <Text style={styles.subtitle}>
-                                    ¡Rápido como un jabalí! 🐗⚡
+                                    ¡Rápido como un sajino! 🐗💨
                                 </Text>
                             )}
                         </LinearGradient>
@@ -321,11 +348,17 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                                         <Ionicons name="logo-google" size={22} color="#EA4335" />
                                     )}
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                                    <Ionicons name="logo-apple" size={22} color={COLORS.gray800} />
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                                    <Ionicons name="logo-facebook" size={22} color="#1877F2" />
+                                <TouchableOpacity
+                                    style={[styles.socialButton, isFacebookLoading && styles.socialButtonLoading]}
+                                    activeOpacity={0.7}
+                                    onPress={handleFacebookSignIn}
+                                    disabled={isFacebookLoading}
+                                >
+                                    {isFacebookLoading ? (
+                                        <ActivityIndicator size="small" color="#1877F2" />
+                                    ) : (
+                                        <Ionicons name="logo-facebook" size={22} color="#1877F2" />
+                                    )}
                                 </TouchableOpacity>
                             </View>
 
