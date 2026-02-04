@@ -61,7 +61,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
     // Calculate estimated delivery time based on status and distance
     const calculateEstimatedTime = (orderData: Order) => {
         if (!orderData.restaurant?.latitude || !orderData.delivery_latitude) {
-            setEstimatedMinutes(35); // Default
+            setEstimatedMinutes(25); // Default más realista
             return;
         }
 
@@ -72,21 +72,26 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
             orderData.delivery_longitude
         );
 
-        // Base times (in minutes)
-        const prepTime = orderData.status === 'confirmed' ? 15 : orderData.status === 'preparing' ? 10 : 0;
-        const travelTime = Math.ceil(distance * 4); // ~15 km/h average speed = 4 min/km
-        const baseBuffer = 5; // Buffer time
+        // Base times (in minutes) - más realistas
+        let prepTime = 0;
+        if (orderData.status === 'confirmed') prepTime = 10;
+        else if (orderData.status === 'preparing') prepTime = 5;
+
+        // Velocidad promedio: 20 km/h en ciudad = 3 min/km
+        const travelTime = Math.ceil(distance * 3);
+        const baseBuffer = 3;
 
         let totalMinutes = prepTime + travelTime + baseBuffer;
 
         // Adjust based on status
-        if (orderData.status === 'picked_up') {
-            totalMinutes = travelTime + 3; // Just travel time plus small buffer
+        if (orderData.status === 'picked_up' || orderData.status === 'ready') {
+            totalMinutes = travelTime + 2;
         } else if (orderData.status === 'delivered') {
             totalMinutes = 0;
         }
 
-        setEstimatedMinutes(Math.max(5, Math.min(60, totalMinutes))); // Clamp between 5-60 min
+        // Clamp entre 5-45 min (más realista)
+        setEstimatedMinutes(Math.max(5, Math.min(45, totalMinutes)));
     };
 
     // Simulated locations (in production these would come from the order/driver)
