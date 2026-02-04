@@ -652,7 +652,7 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: SIZES.lg,
-        paddingBottom: 100,
+        paddingBottom: 180, // Extra padding for fixed footer
     },
     section: {
         marginBottom: SIZES.xl,

@@ -130,20 +130,50 @@ export default function HomeScreen() {
         if (!userId) return;
 
         try {
-            const { error } = await supabase
+            // First check if order is still available
+            const { data: orderCheck } = await supabase
+                .from('orders')
+                .select('driver_id, status')
+                .eq('id', orderId)
+                .single();
+
+            if (orderCheck?.driver_id) {
+                Alert.alert('Error', 'Este pedido ya fue tomado por otro repartidor');
+                loadPendingOrders();
+                return;
+            }
+
+            if (orderCheck?.status === 'cancelled') {
+                Alert.alert('Error', 'Este pedido fue cancelado');
+                loadPendingOrders();
+                return;
+            }
+
+            // Now try to accept it
+            const { error, data } = await supabase
                 .from('orders')
                 .update({ driver_id: userId, status: 'confirmed' })
                 .eq('id', orderId)
-                .is('driver_id', null); // Only update if not already taken
+                .is('driver_id', null)
+                .select();
 
             if (error) {
-                Alert.alert('Error', 'Este pedido ya fue tomado por otro repartidor');
-            } else {
-                Alert.alert('¡Éxito!', 'Pedido aceptado. Ve a recogerlo.');
-                loadPendingOrders();
-                (navigation as any).navigate('OrderDetail', { orderId });
+                console.error('Error accepting order:', error);
+                Alert.alert('Error', 'No se pudo aceptar el pedido. Intenta de nuevo.');
+                return;
             }
+
+            if (!data || data.length === 0) {
+                Alert.alert('Error', 'Este pedido ya fue tomado por otro repartidor');
+                loadPendingOrders();
+                return;
+            }
+
+            Alert.alert('¡Éxito!', 'Pedido aceptado. Ve a recogerlo.');
+            loadPendingOrders();
+            (navigation as any).navigate('OrderDetail', { orderId });
         } catch (error) {
+            console.error('Error:', error);
             Alert.alert('Error', 'No se pudo aceptar el pedido');
         }
     };
