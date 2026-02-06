@@ -10,9 +10,10 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, Phone, Mail, Truck, LogOut, Edit2, Check, X, MapPin } from 'lucide-react-native';
+import { User, Phone, Mail, Truck, LogOut, Edit2, Check, X, MapPin, Sun, Moon, Smartphone, History as HistoryIcon } from 'lucide-react-native';
 import { COLORS } from '../../constants';
 import { supabase } from '../../services/supabase';
+import { useTheme } from '../../context/ThemeContext';
 
 interface DriverProfile {
     id: string;
@@ -26,6 +27,7 @@ interface DriverProfile {
 }
 
 export default function ProfileScreen({ navigation }: any) {
+    const { colors, themeMode, setThemeMode, isDark } = useTheme();
     const [profile, setProfile] = useState<DriverProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
@@ -351,8 +353,70 @@ export default function ProfileScreen({ navigation }: any) {
                     </View>
                 )}
 
+                {/* Pedidos Section */}
+                <View style={[styles.section, { backgroundColor: colors.card }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Pedidos</Text>
+                    <TouchableOpacity
+                        style={[styles.menuItem, { borderBottomColor: colors.border }]}
+                        onPress={() => (navigation as any).navigate('History')}
+                    >
+                        <HistoryIcon size={20} color={colors.textSecondary} />
+                        <Text style={[styles.menuItemText, { color: colors.text }]}>Historial de Pedidos</Text>
+                        <Text style={[styles.chevron, { color: colors.textSecondary }]}>›</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Theme Toggle */}
+                <View style={[styles.section, { backgroundColor: colors.card }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Apariencia</Text>
+                    <View style={styles.themeOptions}>
+                        <TouchableOpacity
+                            style={[
+                                styles.themeOption,
+                                { backgroundColor: colors.background },
+                                themeMode === 'light' && { backgroundColor: colors.primary + '20', borderColor: colors.primary }
+                            ]}
+                            onPress={() => setThemeMode('light')}
+                        >
+                            <Sun size={20} color={themeMode === 'light' ? colors.primary : colors.textSecondary} />
+                            <Text style={[
+                                styles.themeOptionText,
+                                { color: themeMode === 'light' ? colors.primary : colors.textSecondary }
+                            ]}>Claro</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[
+                                styles.themeOption,
+                                { backgroundColor: colors.background },
+                                themeMode === 'dark' && { backgroundColor: colors.primary + '20', borderColor: colors.primary }
+                            ]}
+                            onPress={() => setThemeMode('dark')}
+                        >
+                            <Moon size={20} color={themeMode === 'dark' ? colors.primary : colors.textSecondary} />
+                            <Text style={[
+                                styles.themeOptionText,
+                                { color: themeMode === 'dark' ? colors.primary : colors.textSecondary }
+                            ]}>Oscuro</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[
+                                styles.themeOption,
+                                { backgroundColor: colors.background },
+                                themeMode === 'system' && { backgroundColor: colors.primary + '20', borderColor: colors.primary }
+                            ]}
+                            onPress={() => setThemeMode('system')}
+                        >
+                            <Smartphone size={20} color={themeMode === 'system' ? colors.primary : colors.textSecondary} />
+                            <Text style={[
+                                styles.themeOptionText,
+                                { color: themeMode === 'system' ? colors.primary : colors.textSecondary }
+                            ]}>Sistema</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
                 {/* Logout Button */}
-                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.card }]} onPress={handleLogout}>
                     <LogOut size={20} color={COLORS.error} />
                     <Text style={styles.logoutText}>Cerrar Sesión</Text>
                 </TouchableOpacity>
@@ -534,4 +598,33 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         fontSize: 16,
     },
+    themeOptions: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 10,
+    },
+    themeOption: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        paddingVertical: 12,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: 'transparent',
+    },
+    themeOptionText: {
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        gap: 12,
+    },
+    menuItemText: { fontSize: 16, flex: 1 },
+    chevron: { fontSize: 20, fontWeight: 'bold' },
 });

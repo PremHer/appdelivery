@@ -5,8 +5,10 @@ import { supabase } from '../../services/supabase';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS } from '../../constants';
 import { MapPin, Clock, DollarSign } from 'lucide-react-native';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function OrdersScreen() {
+    const { colors } = useTheme();
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -43,11 +45,11 @@ export default function OrdersScreen() {
 
     const renderOrder = ({ item }: { item: any }) => (
         <TouchableOpacity
-            style={styles.card}
-            onPress={() => navigation.navigate('OrderDetail' as never, { orderId: item.id } as never)}
+            style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.text }]}
+            onPress={() => (navigation as any).navigate('OrderDetail', { orderId: item.id })}
         >
             <View style={styles.cardHeader}>
-                <Text style={styles.restaurantName}>{item.restaurant?.name}</Text>
+                <Text style={[styles.restaurantName, { color: colors.text }]}>{item.restaurant?.name}</Text>
                 <View style={[styles.badge,
                 { backgroundColor: item.status === 'picked_up' ? COLORS.primary : COLORS.success }
                 ]}>
@@ -59,15 +61,15 @@ export default function OrdersScreen() {
 
             <View style={styles.row}>
                 <MapPin size={16} color={COLORS.gray500} />
-                <Text style={styles.address} numberOfLines={1}>
+                <Text style={[styles.address, { color: colors.textSecondary }]} numberOfLines={1}>
                     {item.delivery_address}
                 </Text>
             </View>
 
-            <View style={styles.footer}>
+            <View style={[styles.footer, { borderTopColor: colors.border }]}>
                 <View style={styles.row}>
                     <Clock size={16} color={COLORS.gray500} />
-                    <Text style={styles.detailText}>
+                    <Text style={[styles.detailText, { color: colors.textSecondary }]}>
                         {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </Text>
                 </View>
@@ -82,9 +84,9 @@ export default function OrdersScreen() {
     );
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.title}>Mis Pedidos</Text>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+                <Text style={[styles.title, { color: colors.text }]}>Mis Pedidos</Text>
             </View>
             <FlatList
                 data={orders}
@@ -96,7 +98,7 @@ export default function OrdersScreen() {
                 }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyText}>No tienes pedidos asignados</Text>
+                        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No tienes pedidos asignados</Text>
                     </View>
                 }
             />

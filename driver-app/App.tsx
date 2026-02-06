@@ -9,9 +9,11 @@ import MainTabs from './src/navigation/MainTabs';
 import OrderDetailScreen from './src/screens/orders/OrderDetailScreen';
 import { View, ActivityIndicator } from 'react-native';
 import { COLORS } from './src/constants';
+import { ThemeProvider } from './src/context/ThemeContext';
 
 import DeliveryMapScreen from './src/screens/orders/DeliveryMapScreen';
 import ChatScreen from './src/screens/chat/ChatScreen';
+import HistoryScreen from './src/screens/history/HistoryScreen';
 
 const Stack = createStackNavigator();
 
@@ -43,20 +45,23 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {session ? (
-          <>
-            <Stack.Screen name="Main" component={MainTabs} />
-            <Stack.Screen name="OrderDetail" component={OrderDetailScreen} options={{ headerShown: true, title: 'Detalle de Pedido' }} />
-            <Stack.Screen name="DeliveryMap" component={DeliveryMapScreen} options={{ headerShown: true, title: 'Mapa de Entrega' }} />
-            <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
-          </>
-        ) : (
-          <Stack.Screen name="Login" component={LoginScreen} />
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <ThemeProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {session ? (
+            <>
+              <Stack.Screen name="Main" component={MainTabs} />
+              <Stack.Screen name="OrderDetail" component={OrderDetailScreen} options={{ headerShown: true, title: 'Detalle de Pedido' }} />
+              <Stack.Screen name="DeliveryMap" component={DeliveryMapScreen as any} options={{ headerShown: true, title: 'Mapa de Entrega' }} />
+              <Stack.Screen name="History" component={HistoryScreen} options={{ headerShown: true, title: 'Historial de Pedidos' }} />
+              <Stack.Screen name="Chat" component={ChatScreen as any} options={{ headerShown: false }} />
+            </>
+          ) : (
+            <Stack.Screen name="Login" component={LoginScreen} />
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ThemeProvider>
   );
 }
 

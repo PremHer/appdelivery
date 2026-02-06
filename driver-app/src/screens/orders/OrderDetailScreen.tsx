@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
 import { supabase } from '../../services/supabase';
 import { COLORS } from '../../constants';
-import { MapPin, Phone, CheckCircle, Navigation, MessageCircle } from 'lucide-react-native';
+import { MapPin, Phone, CheckCircle, Navigation, MessageCircle, Camera, Check } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'react-native';
 
 export default function OrderDetailScreen() {
     const route = useRoute();
@@ -11,6 +13,8 @@ export default function OrderDetailScreen() {
     const { orderId } = route.params as { orderId: string };
     const [order, setOrder] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [deliveryPhoto, setDeliveryPhoto] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         fetchOrderDetails();
@@ -22,11 +26,14 @@ export default function OrderDetailScreen() {
                 .from('orders')
                 .select(`
                     *,
+                    proof_of_delivery,
                     restaurant:restaurants(name, address, phone, latitude, longitude),
                     user:users!user_id(full_name, phone),
                     items:order_items(
                         quantity,
                         unit_price,
+                        notes,
+                        customizations,
                         product:products(name)
                     )
                 `)
@@ -45,9 +52,55 @@ export default function OrderDetailScreen() {
 
     const updateStatus = async (newStatus: string) => {
         try {
+            let proofUrl = null;
+
+            if (newStatus === 'delivered' && deliveryPhoto) {
+                setUploading(true);
+                try {
+                    const response = await fetch(deliveryPhoto);
+                    const blob = await response.blob();
+                    const fileName = `${orderId}_${Date.now()}.jpg`;
+
+                    const { data, error: uploadError } = await supabase.storage
+                        .from('delivery-proofs')
+                        .upload(fileName, blob);
+
+                    if (uploadError) throw uploadError;
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('delivery-proofs')
+                        .getPublicUrl(fileName);
+
+                    proofUrl = publicUrl;
+                } catch (err) {
+                    console.error('Error uploading photo:', err);
+                    Alert.alert('Error', 'No se pudo subir la foto. ¿Continuar sin ella?', [
+                        { text: 'Cancelar', style: 'cancel' },
+                        {
+                            text: 'Continuar',
+                            onPress: () => finishUpdate(newStatus, null)
+                        }
+                    ]);
+                    setUploading(false);
+                    return;
+                }
+            }
+
+            await finishUpdate(newStatus, proofUrl);
+        } catch (error) {
+            console.error('Error in update flow:', error);
+            setUploading(false);
+        }
+    };
+
+    const finishUpdate = async (newStatus: string, proofUrl: string | null) => {
+        try {
+            const updates: any = { status: newStatus };
+            if (proofUrl) updates.proof_of_delivery = proofUrl;
+
             const { error } = await supabase
                 .from('orders')
-                .update({ status: newStatus })
+                .update(updates)
                 .eq('id', orderId);
 
             if (error) throw error;
@@ -76,12 +129,57 @@ export default function OrderDetailScreen() {
         } catch (error) {
             console.error('Error updating status:', error);
             Alert.alert('Error', 'No tienes permiso para actualizar este pedido o ocurrió un error.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const takePhoto = async () => {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permiso denegado', 'Se necesita acceso a la cámara para tomar la foto de entrega.');
+            return;
+        }
+
+        const result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.5,
+        });
+
+        if (!result.canceled) {
+            setDeliveryPhoto(result.assets[0].uri);
         }
     };
 
     const openMaps = (lat: number, lon: number, label: string) => {
-        const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
-        Linking.openURL(url);
+        Alert.alert(
+            'Navegar con...',
+            'Elige tu aplicación de mapas preferida',
+            [
+                {
+                    text: 'Waze',
+                    onPress: () => {
+                        const url = `https://waze.com/ul?ll=${lat},${lon}&navigate=yes`;
+                        Linking.openURL(url).catch(() =>
+                            Alert.alert('Error', 'No se pudo abrir Waze. Asegúrate de tenerla instalada.')
+                        );
+                    }
+                },
+                {
+                    text: 'Google Maps',
+                    onPress: () => {
+                        const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+                        Linking.openURL(url);
+                    }
+                },
+                {
+                    text: 'Cancelar',
+                    style: 'cancel'
+                }
+            ]
+        );
     };
 
     if (loading) return <View style={styles.center}><Text>Cargando details...</Text></View>;
@@ -153,9 +251,24 @@ export default function OrderDetailScreen() {
             <View style={styles.card}>
                 <Text style={styles.sectionTitle}>Items</Text>
                 {order.items?.map((item: any, index: number) => (
-                    <View key={index} style={styles.itemRow}>
-                        <Text style={styles.qty}>{item.quantity}x</Text>
-                        <Text style={styles.itemName}>{item.product?.name}</Text>
+                    <View key={index} style={styles.itemContainer}>
+                        <View style={styles.itemRow}>
+                            <Text style={styles.qty}>{item.quantity}x</Text>
+                            <Text style={styles.itemName}>{item.product?.name}</Text>
+                            <Text style={styles.itemPrice}>S/ {(item.unit_price * item.quantity).toFixed(2)}</Text>
+                        </View>
+
+                        {/* Options/Addons */}
+                        {item.customizations && Array.isArray(item.customizations) && item.customizations.map((opt: any, i: number) => (
+                            <Text key={i} style={styles.optionText}>
+                                • {opt.name} {opt.price > 0 && `(+S/ ${Number(opt.price).toFixed(2)})`}
+                            </Text>
+                        ))}
+
+                        {/* Notes */}
+                        {item.notes && (
+                            <Text style={styles.notesText}>📝 Note: {item.notes}</Text>
+                        )}
                     </View>
                 ))}
             </View>
@@ -178,13 +291,48 @@ export default function OrderDetailScreen() {
             </TouchableOpacity>
 
             {/* Action Button */}
+
+            {/* Delivery Photo (Only when picked_up) */}
+            {order.status === 'picked_up' && (
+                <View style={styles.card}>
+                    <Text style={styles.sectionTitle}>Foto de Entrega (Opcional)</Text>
+                    {deliveryPhoto ? (
+                        <View>
+                            <Image source={{ uri: deliveryPhoto }} style={styles.previewImage} />
+                            <TouchableOpacity onPress={() => setDeliveryPhoto(null)} style={styles.retakeButton}>
+                                <Text style={styles.retakeText}>Tomar otra foto</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        <TouchableOpacity style={styles.cameraButton} onPress={takePhoto}>
+                            <Camera size={24} color={COLORS.gray600} />
+                            <Text style={styles.cameraText}>Tomar Foto</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            )}
+
+            {/* View Proof (When delivered) */}
+            {order.status === 'delivered' && order.proof_of_delivery && (
+                <View style={styles.card}>
+                    <Text style={styles.sectionTitle}>Prueba de Entrega</Text>
+                    <Image source={{ uri: order.proof_of_delivery }} style={styles.previewImage} resizeMode="cover" />
+                </View>
+            )}
+
             {action && (
                 <TouchableOpacity
-                    style={[styles.button, { backgroundColor: action.color }]}
+                    style={[
+                        styles.button,
+                        { backgroundColor: action.color },
+                        uploading && { opacity: 0.7 }
+                    ]}
                     onPress={action.action || undefined}
-                    disabled={!action.action}
+                    disabled={!action.action || uploading}
                 >
-                    <Text style={styles.buttonText}>{action.label}</Text>
+                    <Text style={styles.buttonText}>
+                        {uploading ? 'SUBIENDO FOTO...' : action.label}
+                    </Text>
                 </TouchableOpacity>
             )}
         </ScrollView>
@@ -215,9 +363,29 @@ const styles = StyleSheet.create({
         borderRadius: 8
     },
     contactButtonText: { color: COLORS.white, fontWeight: '600' },
-    itemRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },
-    qty: { fontWeight: 'bold' },
-    itemName: { flex: 1 },
+    itemContainer: { marginBottom: 12, borderBottomWidth: 1, borderBottomColor: COLORS.gray100, paddingBottom: 8 },
+    itemRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 },
+    qty: { fontWeight: 'bold', fontSize: 16, color: COLORS.primary },
+    itemName: { flex: 1, fontSize: 16, fontWeight: '500' },
+    itemPrice: { fontWeight: 'bold', color: COLORS.gray800 },
+    optionText: { fontSize: 14, color: COLORS.gray600, marginLeft: 28, marginBottom: 2 },
+    notesText: { fontSize: 14, color: COLORS.gray500, fontStyle: 'italic', marginLeft: 28, marginTop: 4 },
     button: { padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 24, marginBottom: 40 },
-    buttonText: { color: 'white', fontWeight: 'bold', fontSize: 16 }
+    buttonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+    cameraButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        padding: 16,
+        backgroundColor: COLORS.gray100,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: COLORS.gray300,
+        borderStyle: 'dashed',
+    },
+    cameraText: { color: COLORS.gray600, fontWeight: '600' },
+    previewImage: { width: '100%', height: 200, borderRadius: 12, marginBottom: 8 },
+    retakeButton: { alignItems: 'center', padding: 8 },
+    retakeText: { color: COLORS.error, fontWeight: '600' },
 });

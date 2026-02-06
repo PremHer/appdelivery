@@ -4,10 +4,12 @@ import { COLORS } from '../../constants';
 import { supabase } from '../../services/supabase';
 import { Power, MapPin, Clock, DollarSign } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../../context/ThemeContext';
 
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import { registerForPushNotificationsAsync, savePushToken } from '../../services/pushNotifications';
+import { Audio } from 'expo-av';
 
 interface PendingOrder {
     id: string;
@@ -19,10 +21,15 @@ interface PendingOrder {
     restaurant: {
         name: string;
         address: string;
-    };
+    } | {
+        name: string;
+        address: string;
+    }[];
 }
 
 export default function HomeScreen() {
+    const { colors, isDark } = useTheme();
+    const [stats, setStats] = useState({ earnings: 0, count: 0 });
     const [isOnline, setIsOnline] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
     const [locationSubscription, setLocationSubscription] = useState<Location.LocationSubscription | null>(null);
@@ -43,10 +50,12 @@ export default function HomeScreen() {
 
     useEffect(() => {
         checkStatus();
+        fetchStats();
 
         // Listen for incoming notifications (while app is open)
         notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
             console.log('Notification received:', notification);
+            playSound();
             // Refresh orders when notification arrives
             loadPendingOrders();
         });
@@ -123,6 +132,44 @@ export default function HomeScreen() {
             }
         } catch (error) {
             console.error('Error:', error);
+        }
+    };
+
+    const playSound = async () => {
+        try {
+            // Updated to use remote URL to avoid build errors if local asset is missing
+            const { sound } = await Audio.Sound.createAsync(
+                { uri: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3' }, // Simple bell sound
+                { shouldPlay: true }
+            );
+            await sound.playAsync();
+        } catch (error) {
+            console.log('Error playing sound:', error);
+        }
+    };
+
+    const fetchStats = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Fetch today's delivered orders for earnings and count
+            const { data } = await supabase
+                .from('orders')
+                .select('delivery_fee')
+                .eq('driver_id', user.id)
+                .eq('status', 'delivered')
+                .gte('updated_at', today.toISOString());
+
+            const earnings = data?.reduce((sum, order) => sum + (order.delivery_fee || 0), 0) || 0;
+            const count = data?.length || 0;
+
+            setStats({ earnings, count });
+        } catch (error) {
+            console.error('Error fetching stats:', error);
         }
     };
 
@@ -271,19 +318,19 @@ export default function HomeScreen() {
     };
 
     const renderOrderItem = ({ item }: { item: PendingOrder }) => (
-        <View style={styles.orderCard}>
+        <View style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.orderHeader}>
-                <Text style={styles.restaurantName}>{(item.restaurant as any)?.name || 'Restaurante'}</Text>
-                <View style={styles.timeBadge}>
-                    <Clock size={14} color={COLORS.gray500} />
-                    <Text style={styles.timeText}>{formatTime(item.created_at)}</Text>
+                <Text style={[styles.restaurantName, { color: colors.text }]}>{(item.restaurant as any)?.name || 'Restaurante'}</Text>
+                <View style={[styles.timeBadge, { backgroundColor: colors.background }]}>
+                    <Clock size={14} color={colors.textSecondary} />
+                    <Text style={[styles.timeText, { color: colors.textSecondary }]}>{formatTime(item.created_at)}</Text>
                 </View>
             </View>
 
             <View style={styles.orderDetails}>
                 <View style={styles.detailRow}>
                     <MapPin size={16} color={COLORS.primary} />
-                    <Text style={styles.detailText} numberOfLines={1}>{item.delivery_address}</Text>
+                    <Text style={[styles.detailText, { color: colors.textSecondary }]} numberOfLines={1}>{item.delivery_address}</Text>
                 </View>
                 <View style={styles.detailRow}>
                     <DollarSign size={16} color={COLORS.success} />
@@ -301,35 +348,53 @@ export default function HomeScreen() {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
                 {/* Welcome Message */}
                 <View style={styles.welcomeSection}>
-                    <Text style={styles.greetingText}>{getGreeting()},</Text>
-                    <Text style={styles.driverNameText}>{driverName || 'Repartidor'} 👋</Text>
+                    <Text style={[styles.greetingText, { color: colors.textSecondary }]}>{getGreeting()},</Text>
+                    <Text style={[styles.driverNameText, { color: colors.text }]}>{driverName || 'Repartidor'} 👋</Text>
+                    <Text style={[styles.dateText, { color: colors.textSecondary }]}>
+                        {new Date().toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </Text>
                 </View>
 
                 <View style={styles.statusContainer}>
-                    <Text style={[styles.statusText, { color: isOnline ? COLORS.success : COLORS.gray500 }]}>
+                    <Text style={[styles.statusText, { color: isOnline ? COLORS.success : colors.textSecondary }]}>
                         {isOnline ? 'EN LÍNEA' : 'FUERA DE LÍNEA'}
                     </Text>
                     <Switch
-                        trackColor={{ true: COLORS.success, false: COLORS.gray300 }}
+                        trackColor={{ true: COLORS.success, false: colors.border }}
                         thumbColor={COLORS.white}
                         onValueChange={toggleSwitch}
                         value={isOnline}
                     />
                 </View>
-                <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+                <TouchableOpacity onPress={handleLogout} style={[styles.logoutButton, { backgroundColor: colors.background }]}>
                     <Power color={COLORS.error} size={24} />
                 </TouchableOpacity>
             </View>
+
+            {/* Dashboard Stats */}
+            {isOnline && (
+                <View style={[styles.statsContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+                    <View style={styles.statItem}>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Ganancias Hoy</Text>
+                        <Text style={[styles.statValue, { color: COLORS.success }]}>S/ {stats.earnings.toFixed(2)}</Text>
+                    </View>
+                    <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                    <View style={styles.statItem}>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Entregas Hoy</Text>
+                        <Text style={[styles.statValue, { color: colors.text }]}>{stats.count}</Text>
+                    </View>
+                </View>
+            )}
 
             {/* Pending Orders List */}
             <View style={styles.ordersContainer}>
                 {isOnline ? (
                     <>
-                        <Text style={styles.sectionTitle}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>
                             Pedidos Disponibles ({pendingOrders.length})
                         </Text>
                         <FlatList
@@ -349,15 +414,24 @@ export default function HomeScreen() {
                             }
                             ListEmptyComponent={
                                 <View style={styles.emptyContainer}>
-                                    <Text style={styles.emptyText}>No hay pedidos disponibles</Text>
-                                    <Text style={styles.emptySubtext}>Los nuevos pedidos aparecerán aquí</Text>
+                                    <View style={[styles.emptyIcon, { backgroundColor: colors.border }]}>
+                                        <Clock size={40} color={colors.textSecondary} />
+                                    </View>
+                                    <Text style={[styles.emptyText, { color: colors.text }]}>No hay pedidos disponibles</Text>
+                                    <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>Los nuevos pedidos aparecerán aquí</Text>
                                 </View>
                             }
                         />
                     </>
                 ) : (
                     <View style={styles.offlineContainer}>
-                        <Text style={styles.offlineText}>Conéctate para ver pedidos disponibles</Text>
+                        <View style={[styles.offlineIcon, { backgroundColor: colors.border }]}>
+                            <Power size={40} color={colors.textSecondary} />
+                        </View>
+                        <Text style={[styles.offlineTitle, { color: colors.text }]}>Estás desconectado</Text>
+                        <Text style={[styles.offlineSubtitle, { color: colors.textSecondary }]}>
+                            Conéctate para empezar a recibir pedidos cercanos
+                        </Text>
                     </View>
                 )}
             </View>
@@ -430,18 +504,40 @@ const styles = StyleSheet.create({
     emptyContainer: { alignItems: 'center', paddingVertical: 60 },
     emptyText: { fontSize: 16, color: COLORS.gray500 },
     emptySubtext: { fontSize: 14, color: COLORS.gray400, marginTop: 4 },
-    offlineContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    offlineText: { fontSize: 16, color: COLORS.gray500 },
-    welcomeSection: {
-        flex: 1,
+    welcomeSection: { flex: 1 },
+    offlineContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+    offlineIcon: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: COLORS.gray200,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
     },
-    greetingText: {
-        fontSize: 14,
-        color: COLORS.gray500,
+    offlineTitle: { fontSize: 20, fontWeight: 'bold', color: COLORS.gray800, marginBottom: 8 },
+    offlineSubtitle: { fontSize: 16, color: COLORS.gray500, textAlign: 'center' },
+    emptyIcon: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: COLORS.gray100,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
     },
-    driverNameText: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: COLORS.gray800,
+    greetingText: { fontSize: 14, color: COLORS.gray600 },
+    driverNameText: { fontSize: 20, fontWeight: 'bold', color: COLORS.gray800 },
+    dateText: { fontSize: 12, textTransform: 'capitalize', marginTop: 2 },
+    statsContainer: {
+        flexDirection: 'row',
+        padding: 16,
+        backgroundColor: COLORS.white,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.gray200,
     },
+    statItem: { flex: 1, alignItems: 'center' },
+    statLabel: { fontSize: 12, color: COLORS.gray500, marginBottom: 4 },
+    statValue: { fontSize: 20, fontWeight: 'bold', color: COLORS.gray800 },
+    statDivider: { width: 1, height: '100%', backgroundColor: COLORS.gray200 },
 });
